@@ -46,7 +46,6 @@ namespace PLCDataBackUp
         List<int> ralist = new List<int>();
         List<string> RandomPlcSendBuffer = new List<string>();
        
-       
 
         public plcconnect()
         {
