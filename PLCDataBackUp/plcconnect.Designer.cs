@@ -90,7 +90,7 @@
             // 
             this.btn_Connect.Location = new System.Drawing.Point(26, 139);
             this.btn_Connect.Name = "btn_Connect";
-            this.btn_Connect.Size = new System.Drawing.Size(121, 23);
+            this.btn_Connect.Size = new System.Drawing.Size(134, 23);
             this.btn_Connect.TabIndex = 4;
             this.btn_Connect.Text = "接続";
             this.btn_Connect.UseVisualStyleBackColor = true;
@@ -145,7 +145,7 @@
             this.EndAdd2.Name = "EndAdd2";
             this.EndAdd2.Size = new System.Drawing.Size(100, 19);
             this.EndAdd2.TabIndex = 16;
-            this.EndAdd2.Text = "1000";
+            this.EndAdd2.Text = "0";
             // 
             // StartAdd2
             // 
@@ -224,7 +224,7 @@
             this.EndAdd3.Name = "EndAdd3";
             this.EndAdd3.Size = new System.Drawing.Size(100, 19);
             this.EndAdd3.TabIndex = 23;
-            this.EndAdd3.Text = "7FF";
+            this.EndAdd3.Text = "0";
             // 
             // StartAdd3
             // 
@@ -247,9 +247,9 @@
             // 
             this.LoadBtn.Location = new System.Drawing.Point(26, 184);
             this.LoadBtn.Name = "LoadBtn";
-            this.LoadBtn.Size = new System.Drawing.Size(121, 23);
+            this.LoadBtn.Size = new System.Drawing.Size(134, 23);
             this.LoadBtn.TabIndex = 26;
-            this.LoadBtn.Text = "データの読み込み";
+            this.LoadBtn.Text = "連続データの読込";
             this.LoadBtn.UseVisualStyleBackColor = true;
             this.LoadBtn.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -257,9 +257,9 @@
             // 
             this.WriteBtn.Location = new System.Drawing.Point(26, 223);
             this.WriteBtn.Name = "WriteBtn";
-            this.WriteBtn.Size = new System.Drawing.Size(121, 23);
+            this.WriteBtn.Size = new System.Drawing.Size(134, 23);
             this.WriteBtn.TabIndex = 27;
-            this.WriteBtn.Text = "データの書き込み";
+            this.WriteBtn.Text = "連続データの書込";
             this.WriteBtn.UseVisualStyleBackColor = true;
             this.WriteBtn.Click += new System.EventHandler(this.Write_Click);
             // 
@@ -267,9 +267,9 @@
             // 
             this.ReadBtn.Location = new System.Drawing.Point(26, 266);
             this.ReadBtn.Name = "ReadBtn";
-            this.ReadBtn.Size = new System.Drawing.Size(121, 23);
+            this.ReadBtn.Size = new System.Drawing.Size(134, 23);
             this.ReadBtn.TabIndex = 28;
-            this.ReadBtn.Text = "ファイルの読み出し";
+            this.ReadBtn.Text = "連続データファイルの読出";
             this.ReadBtn.UseVisualStyleBackColor = true;
             this.ReadBtn.Click += new System.EventHandler(this.button3_Click);
             // 
@@ -295,9 +295,9 @@
             // 
             this.SaveBtn.Location = new System.Drawing.Point(26, 309);
             this.SaveBtn.Name = "SaveBtn";
-            this.SaveBtn.Size = new System.Drawing.Size(121, 23);
+            this.SaveBtn.Size = new System.Drawing.Size(134, 23);
             this.SaveBtn.TabIndex = 39;
-            this.SaveBtn.Text = "ファイルの保存";
+            this.SaveBtn.Text = "連続データファイルの保存";
             this.SaveBtn.UseVisualStyleBackColor = true;
             this.SaveBtn.Click += new System.EventHandler(this.button6_Click);
             // 
@@ -314,7 +314,7 @@
             // 
             this.button2.Location = new System.Drawing.Point(26, 360);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(121, 23);
+            this.button2.Size = new System.Drawing.Size(134, 23);
             this.button2.TabIndex = 43;
             this.button2.Text = "ランダム読み出し";
             this.button2.UseVisualStyleBackColor = true;
@@ -347,7 +347,7 @@
             // 
             this.button3.Location = new System.Drawing.Point(26, 445);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(121, 23);
+            this.button3.Size = new System.Drawing.Size(134, 23);
             this.button3.TabIndex = 45;
             this.button3.Text = "ランダム書き込み";
             this.button3.UseVisualStyleBackColor = true;
@@ -369,7 +369,7 @@
             // 
             this.button4.Location = new System.Drawing.Point(26, 403);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(121, 23);
+            this.button4.Size = new System.Drawing.Size(134, 23);
             this.button4.TabIndex = 47;
             this.button4.Text = "タイマーStop";
             this.button4.UseVisualStyleBackColor = true;
