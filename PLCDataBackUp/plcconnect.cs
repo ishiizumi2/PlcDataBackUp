@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -567,49 +567,6 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void button3_Click(object sender, EventArgs e)
         {
-            /*   
-               //OpenFileDialogクラスのインスタンスを作成
-               OpenFileDialog ofd = new OpenFileDialog();
-
-               //はじめのファイル名を指定する
-               //はじめに「ファイル名」で表示される文字列を指定する
-               ofd.FileName = "default.csv";
-               //はじめに表示されるフォルダを指定する
-               //指定しない（空の文字列）の時は、現在のディレクトリが表示される
-               ofd.InitialDirectory = @"C:\";
-               //[ファイルの種類]に表示される選択肢を指定する
-               //指定しないとすべてのファイルが表示される
-               ofd.Filter =
-                   "csvファイル(*.csv)|*.csv|すべてのファイル(*.*)|*.*";
-               //[ファイルの種類]ではじめに
-               //「すべてのファイル」が選択されているようにする
-               ofd.FilterIndex = 2;
-               //タイトルを設定する
-               ofd.Title = "開くファイルを選択してください";
-               //ダイアログボックスを閉じる前に現在のディレクトリを復元するようにする
-               ofd.RestoreDirectory = true;
-               //存在しないファイルの名前が指定されたとき警告を表示する
-               //デフォルトでTrueなので指定する必要はない
-               ofd.CheckFileExists = true;
-               //存在しないパスが指定されたとき警告を表示する
-               //デフォルトでTrueなので指定する必要はない
-               ofd.CheckPathExists = true;
-
-               //ダイアログを表示する
-               if (ofd.ShowDialog() == DialogResult.OK)
-               {
-                   //前に表示されているデータを消去
-                   ReceiveDataMemorys.Clear();
-
-                   //OKボタンがクリックされたとき
-                   //選択されたファイル名を読み込んで表示する
-                   foreach (var sdata in File.ReadLines(ofd.FileName, Encoding.GetEncoding("Shift_JIS")).Skip(1).Select(line => line.Split(','))) 
-                   {
-                       ReceiveDataMemorys.Add(new ReceiveDataMemory(sdata[0], int.Parse(sdata[1])));
-                   }
-                   dataGridView2.DataSource = ReceiveDataMemorys.ToList<ReceiveDataMemory>();
-               }
-               */
             string FileName = randomWritePlcSend.FileSelect();
             if (!string.IsNullOrWhiteSpace(FileName))
             {
