@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -125,8 +125,6 @@ namespace PLCDataBackUp
             DebugText(e);
             PlcSend();//次のデータを送信する            
         }
-
-       
 
         /** 終了処理 **/
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
