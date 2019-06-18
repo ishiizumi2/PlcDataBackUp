@@ -861,8 +861,8 @@ namespace PLCDataBackUp
             ReadAddressData();
             SendCount = 0;
             SendCommand = RandomRead;//ランダム読み出しコマンド 
-            ReciveDataBufffer.Clear();
-            ReciveDatas.Clear();
+            //ReciveDataBufffer.Clear();
+            //ReciveDatas.Clear();
             Timer_Set();
             timer1.Start();// タイマーを開始
         }
