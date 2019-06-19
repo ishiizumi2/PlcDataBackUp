@@ -322,7 +322,7 @@ namespace PLCDataBackUp
                         {
                             ReceiveDataMemorys.Clear();
                             ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, RandomPlcSendBuffer);
-                            ReciveDataWrite();
+                            RandomReciveDataSave();
                         }
                         SendCount = 0;
                     }
@@ -751,6 +751,11 @@ namespace PLCDataBackUp
             }
         }
 
+        /// <summary>
+        /// テスト用
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button1_Click_1(object sender, EventArgs e)
         {
            
@@ -787,7 +792,7 @@ namespace PLCDataBackUp
         /// アドレス設定ファイルを読み込む
         /// ReadAddressSetに作成したrslistを渡す        /// 
         /// </summary>
-        private void ReadAddressData()
+        private void RandomReadAddressData()
         {
             List<int> ReadAddressList = new List<int>();
             string FileName = Directory.GetCurrentDirectory() + @"\WorkData\Config\ReadAddressData.dat";
@@ -810,14 +815,14 @@ namespace PLCDataBackUp
                 return;
             }
             ralist = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
-            ReadAddressSet(ralist);
+            RandomReadAddressSet(ralist);
          }
 
         /// <summary>
         /// ralistから送信データList(RandomPlcSendBuffer)を作成
         /// </summary>
         /// <param name="ralist"></param>
-        private void ReadAddressSet(List<int> ralist)
+        private void RandomReadAddressSet(List<int> ralist)
         {
             int last = RandomReadMax;
             int i = 0;
@@ -825,7 +830,7 @@ namespace PLCDataBackUp
             while(i* RandomReadMax  < ralist.Count())
             {
                 var RAList = ralist.Skip(i * RandomReadMax).Take(last).ToList();
-                RandomPlcSendBuffer.Add(randomReadPlcSend.Commandcreate(RAList.Count(), ReadAddressSetiing(RAList)));
+                RandomPlcSendBuffer.Add(randomReadPlcSend.Commandcreate(RAList.Count(), RandomReadAddressSetiing(RAList)));
                 i++;
             }
         }
@@ -836,7 +841,7 @@ namespace PLCDataBackUp
         /// </summary>
         /// <param name="ralist3"></param>
         /// <returns></returns>
-        private string ReadAddressSetiing(List<int> ralist3)
+        private string RandomReadAddressSetiing(List<int> ralist3)
         {
             string str = "";
             foreach (var sdat in ralist3)
@@ -858,7 +863,7 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void button2_Click(object sender, EventArgs e)
         {
-            ReadAddressData();
+            RandomReadAddressData();
             SendCount = 0;
             SendCommand = RandomRead;//ランダム読み出しコマンド 
             //ReciveDataBufffer.Clear();
@@ -870,7 +875,7 @@ namespace PLCDataBackUp
         /// <summary>
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
-        private void ReciveDataWrite()
+        private void RandomReciveDataSave()
         {
             string cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\" + StartTime + ".csv";
             DateTime now = DateTime.Now;
@@ -933,7 +938,7 @@ namespace PLCDataBackUp
         /// wdataからランダムデータ書き込み送信用データを作成
         /// </summary>
         /// <param name="wdata"></param>
-        private void RandomWriteDataSetting(List<(string x, string y)> wdata)
+        private void RandomWriteDataSet(List<(string x, string y)> wdata)
         {
             int last = RandomWriteMax;
             int i = 0;
@@ -941,18 +946,18 @@ namespace PLCDataBackUp
             while (i * RandomWriteMax < wdata.Count())
             {
                 var WWdata = wdata.Skip(i * RandomWriteMax).Take(last).ToList();
-                RandomPlcSendBuffer.Add(randomWritePlcSend.Commandcreate(WWdata.Count(), RandomWriteData(WWdata)));
+                RandomPlcSendBuffer.Add(randomWritePlcSend.Commandcreate(WWdata.Count(), RandomWriteDataSetting(WWdata)));
                 i++;
             }
         }
 
 
         /// <summary>
-        /// wadatからランダム書き込み用のアドレス・書き込みデータを作成
+        /// WWadatからランダム書き込み用のアドレス・書き込みデータを作成
         /// </summary>
         /// <param name="wdata"></param>
         /// <returns></returns>str
-        private string RandomWriteData(List<(string x,string y)> WWdata)
+        private string RandomWriteDataSetting(List<(string x,string y)> WWdata)
         {
             string str = "";
             foreach (var sdat in WWdata)
@@ -1000,7 +1005,7 @@ namespace PLCDataBackUp
                     var result1 = blist.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
 
                     var wdata = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
-                    RandomWriteDataSetting(wdata);
+                    RandomWriteDataSet(wdata);
                     PlcSend();
                     RWcount++;
                 }
