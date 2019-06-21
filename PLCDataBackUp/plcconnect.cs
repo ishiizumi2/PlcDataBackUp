@@ -32,7 +32,7 @@ namespace PLCDataBackUp
         int SendCommand = 0;
         Encoding sjisEnc = Encoding.GetEncoding("Shift_JIS");
         string[] lines;
-        int RWcount = 0;
+        int RowCount = 0; //ランダム書き込み用の配列のカウント
        
         enum Device
         {
@@ -43,7 +43,6 @@ namespace PLCDataBackUp
         List<string> ReciveDataBufffer = new List<string>(); 
         List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
         List<string> ReciveDatas = new List<string>();
-        List<int> ralist = new List<int>();
         List<string> RandomPlcSendBuffer = new List<string>();
        
 
@@ -814,23 +813,22 @@ namespace PLCDataBackUp
                 MessageBoxIcon.Error);
                 return;
             }
-            ralist = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
-            RandomReadAddressSet(ralist);
+            var sralist = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
+            RandomReadAddressSet(sralist);
          }
 
         /// <summary>
-        /// ralistから送信データList(RandomPlcSendBuffer)を作成
+        /// ralistから送信データList RandomPlcSendBuffer<>を作成
         /// </summary>
         /// <param name="ralist"></param>
-        private void RandomReadAddressSet(List<int> ralist)
+        private void RandomReadAddressSet(List<int> sralist)
         {
-            int last = RandomReadMax;
             int i = 0;
             RandomPlcSendBuffer.Clear();
-            while(i* RandomReadMax  < ralist.Count())
+            while(i* RandomReadMax  < sralist.Count())
             {
-                var RAList = ralist.Skip(i * RandomReadMax).Take(last).ToList();
-                RandomPlcSendBuffer.Add(randomReadPlcSend.Commandcreate(RAList.Count(), RandomReadAddressSetiing(RAList)));
+                var OneraList = sralist.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
+                RandomPlcSendBuffer.Add(randomReadPlcSend.Commandcreate(OneraList.Count(), RandomReadAddressSetiing(OneraList)));
                 i++;
             }
         }
@@ -841,10 +839,10 @@ namespace PLCDataBackUp
         /// </summary>
         /// <param name="ralist3"></param>
         /// <returns></returns>
-        private string RandomReadAddressSetiing(List<int> ralist3)
+        private string RandomReadAddressSetiing(List<int> OneraList)
         {
             string str = "";
-            foreach (var sdat in ralist3)
+            foreach (var sdat in OneraList)
             {
                 int addLo = sdat & 0xff;
                 int addHi = sdat >> 8;
@@ -857,7 +855,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダム読み出し
+        /// ランダム読み出しスタート
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -908,14 +906,13 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダムデータ書き込み
+        /// ランダムデータ書き込みスタート
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button3_Click_1(object sender, EventArgs e)
         {
-            SendCount = 0;
-            RWcount = 0;
+            RowCount = 0;
             SendCommand = RandomWrite;//ランダム書き込みコマンド 
             ReciveDataBufffer.Clear();
             string FileName = randomWritePlcSend.FileSelect();
@@ -940,12 +937,11 @@ namespace PLCDataBackUp
         /// <param name="wdata"></param>
         private void RandomWriteDataSet(List<(string x, string y)> wdata)
         {
-            int last = RandomWriteMax;
-            int i = 0;
+　          int i = 0;
             RandomPlcSendBuffer.Clear();
             while (i * RandomWriteMax < wdata.Count())
             {
-                var WWdata = wdata.Skip(i * RandomWriteMax).Take(last).ToList();
+                var WWdata = wdata.Skip(i * RandomWriteMax).Take(RandomWriteMax).ToList();
                 RandomPlcSendBuffer.Add(randomWritePlcSend.Commandcreate(WWdata.Count(), RandomWriteDataSetting(WWdata)));
                 i++;
             }
@@ -983,21 +979,22 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void timer2_Tick(object sender, EventArgs e)
         {
-            if (RWcount >= lines.Count())//送信完了
+            if (RowCount >= lines.Count())//送信完了
             {
                 timer2.Stop();
                 textBox1.Text = "送信完了";
             }
             else
             {
-                string[] arr = lines[RWcount].Split(',');
+                string[] arr = lines[RowCount].Split(',');
                 if (arr.Length != 0)
                 {
                     SendCount = 0;
                     ReciveDataBufffer.Clear();
 
                     List<string> alist = new List<string>();
-                    alist.AddRange(arr);
+                    alist.AddRange(arr); //string[]をlist<string>に変換するために行っている
+
 
                     var blist = alist.Skip(1).ToList();//時刻データを削除
 
@@ -1007,7 +1004,7 @@ namespace PLCDataBackUp
                     var wdata = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
                     RandomWriteDataSet(wdata);
                     PlcSend();
-                    RWcount++;
+                    RowCount++;
                 }
             }
         }
