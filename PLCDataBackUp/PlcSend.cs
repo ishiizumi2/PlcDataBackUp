@@ -91,26 +91,10 @@ namespace PLCDataBackUp
             return FileName;
         }
         public abstract List<string>  AddressSet(List<int> sraList);
-        /// <summary>
-        /// RandomPlcSendBuffer用データを作成
-        /// //RAListから送信用アドレスデータを作成
-        /// </summary>
-        /// <param name="ralist3"></param>
-        /// <returns></returns>
-        public string RandomReadAddressSetiing(List<int> OneraList)
-        {
-            string str = "";
-            foreach (var sdat in OneraList)
-            {
-                int addLo = sdat & 0xff;
-                int addHi = sdat >> 8;
-                //アドレスの指定　P171 デバイス　デバイスコード
-                //                      L -  H     D
-                //                      000000     A8
-                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode;
-            }
-            return str;
-        }
+        public abstract List<string> AddressSet(List<(string x, string y)> swaList);
+
+        public abstract string AddressSetiing(List<int> OneraList);
+        public abstract string AddressSetiing(List<(string x, string y)> OnewaList);
 
     }
 
@@ -277,12 +261,42 @@ namespace PLCDataBackUp
             while (i * RandomReadMax < sraList.Count())
             {
                 var OneraList = sraList.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
-                RandomPlcSendBuffer.Add(Commandcreate(OneraList.Count(), RandomReadAddressSetiing(OneraList)));
+                RandomPlcSendBuffer.Add(Commandcreate(OneraList.Count(), AddressSetiing(OneraList)));
                 i++;
             }
 
             return RandomPlcSendBuffer;
         }
+        public override List<string> AddressSet(List<(string x, string y)> swaList)
+        {
+            return RandomPlcSendBuffer; 
+        }
+        /// <summary>
+        /// RandomPlcSendBuffer用データを作成
+        /// //RAListから送信用アドレスデータを作成
+        /// </summary>
+        /// <param name="ralist3"></param>
+        /// <returns></returns>
+        public override string AddressSetiing(List<int> OneraList)
+        {
+            string str = "";
+            foreach (var sdat in OneraList)
+            {
+                int addLo = sdat & 0xff;
+                int addHi = sdat >> 8;
+                //アドレスの指定　P171 デバイス　デバイスコード
+                //                      L -  H     D
+                //                      000000     A8
+                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode;
+            }
+            return str;
+        }
+        public override string AddressSetiing(List<(string x, string y)> OnewaList)
+        {
+            string str = "";
+            return str;
+        }
+
     }
 
     /// <summary>
@@ -435,9 +449,54 @@ namespace PLCDataBackUp
 
             return ReceiveDataMemorys;
         }
+
         public override List<string> AddressSet(List<int> sraList)
         {
+
             return RandomPlcSendBuffer;
+        }
+
+
+        public override List<string> AddressSet(List<(string x, string y)> swaList)
+        {
+            int i = 0;
+            RandomPlcSendBuffer.Clear();
+            while (i * RandomWriteMax < swaList.Count())
+            {
+                var OnewaList = swaList.Skip(i * RandomWriteMax).Take(RandomWriteMax).ToList();
+                RandomPlcSendBuffer.Add(Commandcreate(OnewaList.Count(), AddressSetiing(OnewaList)));
+                i++;
+            }
+            return RandomPlcSendBuffer;
+        }
+        public override string AddressSetiing(List<int> OneraList)
+        {
+            string str = "";
+            return str;
+        }
+        /// <summary>
+        /// RandomPlcSendBuffer用データを作成
+        /// //RAListから送信用アドレスデータを作成
+        /// </summary>
+        /// <param name="ralist3"></param>
+        /// <returns></returns>
+        public override string AddressSetiing(List<(string x, string y)> OnewaList)
+        {
+            string str = "";
+            foreach (var sdat in OnewaList)
+            {
+                int address = int.Parse(sdat.x.Replace("D", ""));
+                int data = int.Parse(sdat.y);
+                int addLo = address & 0xff;
+                int addHi = address >> 8;
+                int dataLo = data & 0xff;
+                int dataHi = data >> 8;
+                //アドレスの指定　P158 デバイス　デバイスコード  書き込みデータ
+                //                      L -  H     D
+                //                      000000     A8
+                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode + dataLo.ToString("X2") + dataHi.ToString("X2");
+            }
+            return str;
         }
 
 

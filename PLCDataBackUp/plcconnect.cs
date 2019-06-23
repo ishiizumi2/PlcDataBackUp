@@ -817,42 +817,6 @@ namespace PLCDataBackUp
             RandomPlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
          }
 
-        /// <summary>
-        /// ralistから送信データList RandomPlcSendBuffer<>を作成
-        /// </summary>
-        /// <param name="ralist"></param>
-        private void RandomReadAddressSet(List<int> sraList)
-        {
-            int i = 0;
-            RandomPlcSendBuffer.Clear();
-            while(i* RandomReadMax  < sraList.Count())
-            {
-                var OneraList = sraList.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
-                RandomPlcSendBuffer.Add(randomReadPlcSend.Commandcreate(OneraList.Count(), RandomReadAddressSetiing(OneraList)));
-                i++;
-            }
-        }
-
-        /// <summary>
-        /// RandomPlcSendBuffer用データを作成
-        /// //RAListから送信用アドレスデータを作成
-        /// </summary>
-        /// <param name="ralist3"></param>
-        /// <returns></returns>
-        private string RandomReadAddressSetiing(List<int> OneraList)
-        {
-            string str = "";
-            foreach (var sdat in OneraList)
-            {
-                int addLo = sdat & 0xff;
-                int addHi = sdat >> 8;
-                //アドレスの指定　P171 デバイス　デバイスコード
-                //                      L -  H     D
-                //                      000000     A8
-                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00"+ DeviceCode;
-            }
-            return str;
-        }
 
         /// <summary>
         /// ランダム読み出しスタート
@@ -930,47 +894,6 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// wdataからランダムデータ書き込み送信用データを作成
-        /// </summary>
-        /// <param name="wdata"></param>
-        private void RandomWriteDataSet(List<(string x, string y)> swaList)
-        {
-　          int i = 0;
-            RandomPlcSendBuffer.Clear();
-            while (i * RandomWriteMax < swaList.Count())
-            {
-                var OnewaList = swaList.Skip(i * RandomWriteMax).Take(RandomWriteMax).ToList();
-                RandomPlcSendBuffer.Add(randomWritePlcSend.Commandcreate(OnewaList.Count(), RandomWriteDataSetting(OnewaList)));
-                i++;
-            }
-        }
-
-
-        /// <summary>
-        /// WWadatからランダム書き込み用のアドレス・データを作成
-        /// </summary>
-        /// <param name="wdata"></param>
-        /// <returns></returns>str
-        private string RandomWriteDataSetting(List<(string x,string y)> OnewaList)
-        {
-            string str = "";
-            foreach (var sdat in OnewaList)
-            {
-                int address = int.Parse(sdat.x.Replace("D",""));
-                int data = int.Parse(sdat.y);
-                int addLo = address &  0xff;
-                int addHi = address >> 8;
-                int dataLo = data & 0xff;
-                int dataHi = data >> 8;
-                //アドレスの指定　P158 デバイス　デバイスコード  書き込みデータ
-                //                      L -  H     D
-                //                      000000     A8
-                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode + dataLo.ToString("X2") + dataHi.ToString("X2");
-            }
-            return str;
-        }
-
-        /// <summary>
         /// ランダム書き込み用のタイマー
         /// </summary>
         /// <param name="sender"></param>
@@ -1000,7 +923,7 @@ namespace PLCDataBackUp
                     var result1 = blist.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
 
                     var swaList = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
-                    RandomWriteDataSet(swaList);
+                    RandomPlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
                     PlcSend();
                     RowCount++;
                 }
