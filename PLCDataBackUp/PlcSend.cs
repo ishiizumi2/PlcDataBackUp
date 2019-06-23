@@ -12,10 +12,16 @@ namespace PLCDataBackUp
     {
         //Socketクライアント
         TcpClient tClient = new TcpClient();
+        protected const int RandomReadMax = 192;//ランダム読み出し最大
+        protected const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
+        protected const string DeviceCode = "A8"; //Dアドレス
+
         protected string Buf = "500000FFFF0300";
         protected string CPUwatchtimer = "1000";
         protected string Sdata;
-        protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>(); 
+        protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
+        protected List<string> RandomPlcSendBuffer = new List<string>();
+
         internal string StartTime { get; set; }
         
         public abstract string Commandcreate(int count,string senddata);
@@ -84,6 +90,28 @@ namespace PLCDataBackUp
             }
             return FileName;
         }
+        public abstract List<string>  AddressSet(List<int> sraList);
+        /// <summary>
+        /// RandomPlcSendBuffer用データを作成
+        /// //RAListから送信用アドレスデータを作成
+        /// </summary>
+        /// <param name="ralist3"></param>
+        /// <returns></returns>
+        public string RandomReadAddressSetiing(List<int> OneraList)
+        {
+            string str = "";
+            foreach (var sdat in OneraList)
+            {
+                int addLo = sdat & 0xff;
+                int addHi = sdat >> 8;
+                //アドレスの指定　P171 デバイス　デバイスコード
+                //                      L -  H     D
+                //                      000000     A8
+                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode;
+            }
+            return str;
+        }
+
     }
 
 
@@ -238,6 +266,23 @@ namespace PLCDataBackUp
             return ReceiveDataMemorys;
         }
 
+        /// <summary>
+        /// ralistから送信データList RandomPlcSendBuffer<>を作成
+        /// </summary>
+        /// <param name="ralist"></param>
+        public override List<string>  AddressSet(List<int> sraList)
+        {
+            int i = 0;
+            RandomPlcSendBuffer.Clear();
+            while (i * RandomReadMax < sraList.Count())
+            {
+                var OneraList = sraList.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
+                RandomPlcSendBuffer.Add(Commandcreate(OneraList.Count(), RandomReadAddressSetiing(OneraList)));
+                i++;
+            }
+
+            return RandomPlcSendBuffer;
+        }
     }
 
     /// <summary>
@@ -390,6 +435,11 @@ namespace PLCDataBackUp
 
             return ReceiveDataMemorys;
         }
+        public override List<string> AddressSet(List<int> sraList)
+        {
+            return RandomPlcSendBuffer;
+        }
+
 
     }
 
