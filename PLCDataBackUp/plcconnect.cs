@@ -145,7 +145,7 @@ namespace PLCDataBackUp
                     for (int k = 0; k < 2;k++ )
                         ReadOutAddress[i, j, k] = (long)-1;
             
-            for(int AddressCnt=0; AddressCnt<1; AddressCnt++)
+            for(int AddressCnt=0; AddressCnt<3; AddressCnt++)
             {
                 //TextBoxをさがす。子コントロールも検索する。
                 Control st = this.Controls["StartAdd"+(AddressCnt+1).ToString()];
@@ -227,7 +227,7 @@ namespace PLCDataBackUp
             if (!ReadOutStartAddressSet())
                 return;
 
-            for(long devicecnt = 0; devicecnt <1 ; devicecnt++)
+            for(long devicecnt = 0; devicecnt <3 ; devicecnt++)
             {
                 switch(devicecnt)
                 {
@@ -621,7 +621,7 @@ namespace PLCDataBackUp
                 return(false);
             }
             SendDatas.Clear();
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 3; i++)
             {
                 long StartAddres = long.Parse(RData[i * 2].ReceiveAddress.Substring(1));
                 long EndAddress = long.Parse(RData[i * 2 + 1].ReceiveAddress.Substring(1));
