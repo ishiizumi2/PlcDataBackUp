@@ -324,11 +324,11 @@ namespace PLCDataBackUp
             string str = "";
             return str;
         }
+       
         /// <summary>
-        /// RandomPlcSendBuffer用データを作成
-        /// //RAListから送信用アドレスデータを作成
+        /// 
         /// </summary>
-        /// <param name="ralist3"></param>
+        /// <param name="OnewaList"></param>
         /// <returns></returns>
         public override string AddressSetiing(List<(string x, string y)> OnewaList)
         {
