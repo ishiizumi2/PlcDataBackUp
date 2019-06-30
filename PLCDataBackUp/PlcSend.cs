@@ -28,7 +28,14 @@ namespace PLCDataBackUp
 
         public abstract List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas,List<string> RandomPlcSendBuffer);
         public abstract List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<SendData> SendDatas);
-        
+
+        public abstract List<string> AddressSet(List<int> sraList);
+        public abstract List<string> AddressSet(List<(string x, string y)> swaList);
+
+        public abstract string AddressSetiing(List<int> OneraList);
+        public abstract string AddressSetiing(List<(string x, string y)> OnewaList);
+
+
         /// <summary>
         /// 送信データ,受信データの保存 Debug
         /// </summary>
@@ -90,11 +97,6 @@ namespace PLCDataBackUp
             }
             return FileName;
         }
-        public abstract List<string>  AddressSet(List<int> sraList);
-        public abstract List<string> AddressSet(List<(string x, string y)> swaList);
-
-        public abstract string AddressSetiing(List<int> OneraList);
-        public abstract string AddressSetiing(List<(string x, string y)> OnewaList);
 
     }
 
