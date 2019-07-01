@@ -122,7 +122,7 @@ namespace PLCDataBackUp
         {
             ReciveDataBufffer.Add(e);//受信した
             DebugText(e);
-            PlcSend();//次のデータを送信する            
+            PlcDataSend();//次のデータを送信する            
         }
 
         /** 終了処理 **/
@@ -261,13 +261,13 @@ namespace PLCDataBackUp
 　          SendCount = 0;
             SendCommand = LumpingRead;//ワード単位の一括読出
             ReciveDataBufffer.Clear();
-            PlcSend();//最初のデータ送信
+            PlcDataSend();//最初のデータ送信
         }
 
         /// <summary>
         /// PLCに送信バッファのデータを1個ずつ送信する
         /// </summary>
-        private void PlcSend()
+        private void PlcDataSend()
         {
             switch (SendCommand)
             {
@@ -593,7 +593,7 @@ namespace PLCDataBackUp
                 SendCount = 0;
                 SendCommand = LumpingWrite;//ワード単位の一括書き込み
                 ReciveDataBufffer.Clear();
-                PlcSend();
+                PlcDataSend();
             }  
         }
 
@@ -864,7 +864,7 @@ namespace PLCDataBackUp
         {
              ReciveDataBufffer.Clear();
              ReciveDatas.Clear();
-             PlcSend();
+             PlcDataSend();
         }
 
         /// <summary>
@@ -924,7 +924,7 @@ namespace PLCDataBackUp
 
                     var swaList = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
                     RandomPlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
-                    PlcSend();
+                    PlcDataSend();
                     RowCount++;
                 }
             }

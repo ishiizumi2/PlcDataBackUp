@@ -59,7 +59,6 @@
             this.button2 = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.label2 = new System.Windows.Forms.Label();
             this.button3 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.timer2 = new System.Windows.Forms.Timer(this.components);
@@ -275,7 +274,7 @@
             // 
             // textBox10
             // 
-            this.textBox10.Location = new System.Drawing.Point(548, 44);
+            this.textBox10.Location = new System.Drawing.Point(630, 44);
             this.textBox10.Name = "textBox10";
             this.textBox10.Size = new System.Drawing.Size(100, 19);
             this.textBox10.TabIndex = 34;
@@ -304,7 +303,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(561, 29);
+            this.label1.Location = new System.Drawing.Point(638, 29);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(53, 12);
             this.label1.TabIndex = 40;
@@ -333,15 +332,6 @@
             // 
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(0, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(35, 12);
-            this.label2.TabIndex = 44;
-            this.label2.Text = "label2";
             // 
             // button3
             // 
@@ -377,7 +367,7 @@
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(548, 93);
+            this.textBox2.Location = new System.Drawing.Point(630, 93);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(100, 19);
             this.textBox2.TabIndex = 48;
@@ -386,7 +376,7 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(561, 78);
+            this.label14.Location = new System.Drawing.Point(638, 78);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(67, 12);
             this.label14.TabIndex = 49;
@@ -402,7 +392,6 @@
             this.Controls.Add(this.button4);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.button3);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.SaveBtn);
@@ -473,7 +462,6 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Timer timer1;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Timer timer2;
