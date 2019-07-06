@@ -14,7 +14,6 @@ namespace PLCDataBackUp
         TcpClient tClient = new TcpClient();
         protected const int RandomReadMax = 192;//ランダム読み出し最大
         protected const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
-        protected const string DeviceCode = "A8"; //Dアドレス
 
         protected string Buf = "500000FFFF0300";
         protected string CPUwatchtimer = "1000";
@@ -96,6 +95,33 @@ namespace PLCDataBackUp
                 FileName = ofd.FileName;
             }
             return FileName;
+        }
+
+        /// <summary>
+        /// デバイスコードを送信用バイナリコードに変換
+        /// </summary>
+        /// <param name="ch"></param>ジバイスコード
+        /// <returns></returns>バイナリコード
+        public string CodeChange(string ch)
+        {
+            string devicecode;
+            switch (ch)
+            {
+                case "D":
+                    devicecode = "A8";
+                    break;
+                case "R":
+                    devicecode = "AF";
+                    break;
+                case "W":
+                    devicecode = "B4";
+                    break;
+                default:
+                    devicecode = "";
+                    break;
+            }
+
+            return devicecode;
         }
 
     }
@@ -234,6 +260,7 @@ namespace PLCDataBackUp
         public override string AddressSetiing(List<int> OneraList)
         {
             string str = "";
+            string DeviceCode = "A8"; //Dアドレス
             foreach (var sdat in OneraList)
             {
                 int addLo = sdat & 0xff;
@@ -335,9 +362,11 @@ namespace PLCDataBackUp
         public override string AddressSetiing(List<(string x, string y)> OnewaList)
         {
             string str = "";
+            string DeviceCode = "A8";
             foreach (var sdat in OnewaList)
             {
-                int address = int.Parse(sdat.x.Replace("D", ""));
+                string ad = sdat.x.Substring(0, 1);
+                int address = int.Parse(sdat.x.Replace(ad, ""));
                 int data = int.Parse(sdat.y);
                 int addLo = address & 0xff;
                 int addHi = address >> 8;
@@ -488,6 +517,7 @@ namespace PLCDataBackUp
         public override string AddressSetiing(List<int> OneraList)
         {
             string str = "";
+            string DeviceCode = "A8"; //Dアドレス
             foreach (var sdat in OneraList)
             {
                 int addLo = sdat & 0xff;
