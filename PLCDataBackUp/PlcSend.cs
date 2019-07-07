@@ -362,11 +362,11 @@ namespace PLCDataBackUp
         public override string AddressSetiing(List<(string x, string y)> OnewaList)
         {
             string str = "";
-            string DeviceCode = "A8";
             foreach (var sdat in OnewaList)
             {
                 string ad = sdat.x.Substring(0, 1);
                 int address = int.Parse(sdat.x.Replace(ad, ""));
+                string DeviceCode = CodeChange(ad);
                 int data = int.Parse(sdat.y);
                 int addLo = address & 0xff;
                 int addHi = address >> 8;
@@ -398,6 +398,7 @@ namespace PLCDataBackUp
         /// <returns></returns>
         public override string Commandcreate(int count, string senddata)
         {
+        
             int len = count * 4 + 8;
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
