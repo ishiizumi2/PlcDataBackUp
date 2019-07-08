@@ -15,10 +15,10 @@ namespace PLCDataBackUp
         const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
         const int ArrayCount = 68; //32767/MaxLingthの数
         const int RDStratPosition = 22;
-        const int LumpingRead = 0401; //PLC 一括読み出しコマンド
-        const int LumpingWrite = 1401;//PLC 一括書き込みコマンド
-        const int RandomRead = 0403; //PLC ランダム読み出しコマンド 
-        const int RandomWrite = 1402; //PLC ランダム読み出しコマンド
+        const string ContinuityRead =  "0104"; //PLC 一括読み出しコマンド
+        const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
+        const string RandomRead =      "0304"; //PLC ランダム読み出しコマンド 
+        const string RandomWrite =     "0214"; //PLC ランダム書き込みコマンド
         const string DeviceCode = "A8"; //Dアドレス
         const int MaxAddres = 11135; //Qシリーズで扱える最大のDアドレス
 
@@ -29,7 +29,7 @@ namespace PLCDataBackUp
         long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
         int SendCount = 0; //送信データカウント
         string StartTime;
-        int SendCommand = 0;
+        string SendCommand = "";
         Encoding sjisEnc = Encoding.GetEncoding("Shift_JIS");
         string[] lines;
         int RowCount = 0; //ランダム書き込み用の配列のカウント
@@ -259,7 +259,7 @@ namespace PLCDataBackUp
 
             //Bufferのデータを送信する
 　          SendCount = 0;
-            SendCommand = LumpingRead;//ワード単位の一括読出
+            SendCommand = ContinuityRead;//ワード単位の一括読出
             ReciveDataBufffer.Clear();
             PlcDataSend();//最初のデータ送信
         }
@@ -271,7 +271,7 @@ namespace PLCDataBackUp
         {
             switch (SendCommand)
             {
-                case LumpingRead:
+                case ContinuityRead:
                     if (SendCount < SendDatas.Count)
                     {
                         SendData SData = SendDatas.ElementAtOrDefault(SendCount);
@@ -285,11 +285,11 @@ namespace PLCDataBackUp
                     {
                         if (ReadReceiveDataCheck() == 0)
                         {
-                            dataGridView2.DataSource = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, SendDatas);
+                           RequestReceiveDataSet();
                         }
                     }
                     break;
-                case LumpingWrite:
+                case ContinuityWrite:
                     if (SendCount < WriteSendDatas.Count)
                     {
                         WriteSendData SData = WriteSendDatas.ElementAtOrDefault(SendCount);
@@ -355,6 +355,7 @@ namespace PLCDataBackUp
         /// <param name="ReadLen"></param>読み出しワード数
         private void RequestDataSend(int devicecode,long StartAddress,long ReadLen)
         {
+            //要求データ長がC0で決まっている
             string Buf1 = "500000FFFF03000C00100001040000";
             int addLo = (int)StartAddress & 0xff;
             int addHi = (int)StartAddress >> 8;
@@ -374,22 +375,22 @@ namespace PLCDataBackUp
         private int ReadReceiveDataCheck()
         {
             int Endcode = -1;
-
-            foreach (var RRdata in ReciveDataBufffer.Select((data, index) => new { data, index }))
+           
+            foreach (var ReceiveData in ReciveDataBufffer)
             {
-                if (RRdata.data.Length != 0)
-                { 
-                   string DataLength = RRdata.data.Substring(14, 4);//応答データ長
-                   if (Int32.TryParse(RRdata.data.Substring(18, 4), out Endcode))
-                   {
-                       if (Endcode == 0)
-                       {
-                           string Databuf = RRdata.data.Substring(RDStratPosition);//読み込みデータ
-                           int Position = Convert.ToInt32((DataLength.Substring(2, 2) + DataLength.Substring(0, 2)), 16);
-                           if ((Databuf.Length) / 2 + 2 == Position)
-                           {
-                               ReciveDatas.Add(Databuf);
-                           }
+                if (ReceiveData.Length != 0)
+                {
+                    string DataLength = ReceiveData.Substring(14, 4);//応答データ長
+                    if (Int32.TryParse(ReceiveData.Substring(18, 4), out Endcode))
+                    {
+                        if (Endcode == 0)
+                        {
+                            string Databuf = ReceiveData.Substring(RDStratPosition);//読み込みデータ
+                            int Position = Convert.ToInt32((DataLength.Substring(2, 2) + DataLength.Substring(0, 2)), 16);
+                            if ((Databuf.Length) / 2 + 2 == Position)
+                            {
+                                ReciveDatas.Add(Databuf);
+                            }
                         }
                     }
                 }
@@ -406,9 +407,9 @@ namespace PLCDataBackUp
             string DeviceKind = "";
             string s = "";
            
-            foreach (var RRdata in ReciveDatas.Select((data, index) => new { data, index }))
+            foreach (var ReceiveData in ReciveDatas.Select((data, index) => new { data, index }))
             {
-                SendData senddata = SendDatas.ElementAtOrDefault(RRdata.index);
+                SendData senddata = SendDatas.ElementAtOrDefault(ReceiveData.index);
                 if (senddata != null)
                 {
                     int Datacount = 0;
@@ -417,9 +418,9 @@ namespace PLCDataBackUp
                     {
                         try
                         {
-                            if (RRdata.data.Length > Datacount * 4)
+                            if (ReceiveData.data.Length > Datacount * 4)
                             {
-                                string Rdata = RRdata.data.Substring(Datacount * 4, 4);
+                                string Rdata = ReceiveData.data.Substring(Datacount * 4, 4);
                                 if (!string.IsNullOrEmpty(Rdata))
                                 {
 
@@ -591,7 +592,7 @@ namespace PLCDataBackUp
             {
                 //Bufferのデータを送信する
                 SendCount = 0;
-                SendCommand = LumpingWrite;//ワード単位の一括書き込み
+                SendCommand = ContinuityWrite;//ワード単位の一括書き込み
                 ReciveDataBufffer.Clear();
                 PlcDataSend();
             }  
@@ -739,10 +740,10 @@ namespace PLCDataBackUp
         {
             //string DataLength = "0";
 
-            foreach (var RRdata in ReciveDataBufffer.Select((data, index) => new { data, index }))
+            foreach (var ReceiveData in ReciveDataBufffer)
             {
-                //DataLength = RRdata.data.Substring(14, 4);//応答データ長
-                string Endcode = RRdata.data.Substring(18, 4);//終了コード
+                //DataLength = ReceiveData.data.Substring(14, 4);//応答データ長
+                string Endcode = ReceiveData.Substring(18, 4);//終了コード
                 if (int.Parse(Endcode) != 0)
                 {
                     MessageBox.Show("書き込みデータの応答が異常終了です"); 

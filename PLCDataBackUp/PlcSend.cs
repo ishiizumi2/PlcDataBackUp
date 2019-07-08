@@ -15,7 +15,7 @@ namespace PLCDataBackUp
         protected const int RandomReadMax = 192;//ランダム読み出し最大
         protected const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
 
-        protected string Buf = "500000FFFF0300";
+        protected string Common = "500000FFFF0300";
         protected string CPUwatchtimer = "1000";
         protected string Sdata;
         protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
@@ -145,7 +145,7 @@ namespace PLCDataBackUp
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
 
-            Sdata = Buf + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "03040000" + count.ToString("X2") + "00" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "03040000" + count.ToString("X2") + "00" + senddata;
             return Sdata;
         }
 
@@ -300,7 +300,7 @@ namespace PLCDataBackUp
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
 
-            Sdata = Buf + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "02140000" + count.ToString("X2") + "00" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "02140000" + count.ToString("X2") + "00" + senddata;
             return Sdata;
         }
  
@@ -403,7 +403,7 @@ namespace PLCDataBackUp
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
 
-            Sdata = Buf + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "03040000" + count.ToString("X2") + "00" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "03040000" + count.ToString("X2") + "00" + senddata;
             return Sdata;
         }
 
