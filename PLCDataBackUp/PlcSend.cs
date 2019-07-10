@@ -19,13 +19,13 @@ namespace PLCDataBackUp
         protected string CPUwatchtimer = "1000";
         protected string Sdata;
         protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
-        protected List<string> RandomPlcSendBuffer = new List<string>();
+        protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
 
         internal string StartTime { get; set; }
         
         public abstract string Commandcreate(int count,string senddata);
 
-        public abstract List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas,List<string> RandomPlcSendBuffer);
+        public abstract List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas,List<string> PlcSendBuffer);
         public abstract List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<SendData> SendDatas);
 
         public abstract List<string> AddressSet(List<int> sraList);
@@ -154,7 +154,7 @@ namespace PLCDataBackUp
         /// 要求したデータをlist<>ReceiveDataMemorysに設定
         ///  ReciveDatas と SendatasからデータをマージしてReceiveDataMemorysに代入する
         /// </summary>
-        public override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> RandomPlcSendBuffer)
+        public override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> PlcSendBuffer)
         {
             string DeviceKind = "D";
             List<string> addressList = new List<string>();
@@ -162,7 +162,7 @@ namespace PLCDataBackUp
 
             foreach (var RRdata in ReciveDatas.Select((data, index) => new { data, index }))
             {
-                string senddata = RandomPlcSendBuffer.ElementAtOrDefault(RRdata.index); 
+                string senddata = PlcSendBuffer.ElementAtOrDefault(RRdata.index); 
                 if (senddata != null)
                 {
                     //DアドレスのList<string>を作成する
@@ -229,30 +229,30 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ralistから送信データList RandomPlcSendBuffer<>を作成
+        /// ralistから送信データList PlcSendBuffer<>を作成
         /// </summary>
         /// <param name="ralist"></param>
         public override List<string>  AddressSet(List<int> sraList)
         {
             int i = 0;
-            RandomPlcSendBuffer.Clear();
+            PlcSendBuffer.Clear();
             while (i * RandomReadMax < sraList.Count())
             {
                 var OneraList = sraList.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
-                RandomPlcSendBuffer.Add(Commandcreate(OneraList.Count(), AddressSetiing(OneraList)));
+                PlcSendBuffer.Add(Commandcreate(OneraList.Count(), AddressSetiing(OneraList)));
                 i++;
             }
 
-            return RandomPlcSendBuffer;
+            return PlcSendBuffer;
         }
 
         //未使用
         public override List<string> AddressSet(List<(string x, string y)> swaList)
         {
-            return RandomPlcSendBuffer; 
+            return PlcSendBuffer; 
         }
         /// <summary>
-        /// RandomPlcSendBuffer用データを作成
+        /// PlcSendBuffer用データを作成
         /// //RAListから送信用アドレスデータを作成
         /// </summary>
         /// <param name="ralist3"></param>
@@ -308,9 +308,9 @@ namespace PLCDataBackUp
         /// 未使用
         /// </summary>
         /// <param name="ReciveDatas"></param>
-        /// <param name="RandomPlcSendBuffer"></param>
+        /// <param name="PlcSendBuffer"></param>
         /// <returns></returns>
-        public override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> RandomPlcSendBuffer)
+        public override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> PlcSendBuffer)
         {
             return ReceiveDataMemorys;
         }
@@ -330,21 +330,21 @@ namespace PLCDataBackUp
         public override List<string> AddressSet(List<int> sraList)
         {
 
-            return RandomPlcSendBuffer;
+            return PlcSendBuffer;
         }
 
 
         public override List<string> AddressSet(List<(string x, string y)> swaList)
         {
             int i = 0;
-            RandomPlcSendBuffer.Clear();
+            PlcSendBuffer.Clear();
             while (i * RandomWriteMax < swaList.Count())
             {
                 var OnewaList = swaList.Skip(i * RandomWriteMax).Take(RandomWriteMax).ToList();
-                RandomPlcSendBuffer.Add(Commandcreate(OnewaList.Count(), AddressSetiing(OnewaList)));
+                PlcSendBuffer.Add(Commandcreate(OnewaList.Count(), AddressSetiing(OnewaList)));
                 i++;
             }
-            return RandomPlcSendBuffer;
+            return PlcSendBuffer;
         }
 
         //未使用
@@ -412,7 +412,7 @@ namespace PLCDataBackUp
         /// 要求したデータをlist<>ReceiveDataMemorysに設定
         ///  ReciveDatas と SendatasからデータをマージしてReceiveDataMemorysに代入する
         /// </summary>
-        public override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> RandomPlcSendBuffer)
+        public override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> PlcSendBuffer)
         {
             string DeviceKind = "D";
             List<string> addressList = new List<string>();
@@ -420,7 +420,7 @@ namespace PLCDataBackUp
 
             foreach (var RRdata in ReciveDatas.Select((data, index) => new { data, index }))
             {
-                string senddata = RandomPlcSendBuffer.ElementAtOrDefault(RRdata.index);
+                string senddata = PlcSendBuffer.ElementAtOrDefault(RRdata.index);
                 if (senddata != null)
                 {
                     //DアドレスのList<string>を作成する
@@ -487,30 +487,30 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ralistから送信データList RandomPlcSendBuffer<>を作成
+        /// ralistから送信データList PlcSendBuffer<>を作成
         /// </summary>
         /// <param name="ralist"></param>
         public override List<string> AddressSet(List<int> sraList)
         {
             int i = 0;
-            RandomPlcSendBuffer.Clear();
+            PlcSendBuffer.Clear();
             while (i * RandomReadMax < sraList.Count())
             {
                 var OneraList = sraList.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
-                RandomPlcSendBuffer.Add(Commandcreate(OneraList.Count(), AddressSetiing(OneraList)));
+                PlcSendBuffer.Add(Commandcreate(OneraList.Count(), AddressSetiing(OneraList)));
                 i++;
             }
 
-            return RandomPlcSendBuffer;
+            return PlcSendBuffer;
         }
 
         //未使用
         public override List<string> AddressSet(List<(string x, string y)> swaList)
         {
-            return RandomPlcSendBuffer;
+            return PlcSendBuffer;
         }
         /// <summary>
-        /// RandomPlcSendBuffer用データを作成
+        /// PlcSendBuffer用データを作成
         /// //RAListから送信用アドレスデータを作成
         /// </summary>
         /// <param name="ralist3"></param>

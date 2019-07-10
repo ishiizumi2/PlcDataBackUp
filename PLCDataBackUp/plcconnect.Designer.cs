@@ -136,7 +136,7 @@
             this.EndAdd1.Name = "EndAdd1";
             this.EndAdd1.Size = new System.Drawing.Size(100, 19);
             this.EndAdd1.TabIndex = 13;
-            this.EndAdd1.Text = "10000";
+            this.EndAdd1.Text = "100";
             // 
             // EndAdd2
             // 

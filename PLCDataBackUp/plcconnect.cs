@@ -43,8 +43,8 @@ namespace PLCDataBackUp
         List<string> ReciveDataBufffer = new List<string>(); 
         List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
         List<string> ReciveDatas = new List<string>();
-        List<string> RandomPlcSendBuffer = new List<string>();
-       
+        List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
+
 
         public plcconnect()
         {
@@ -305,9 +305,9 @@ namespace PLCDataBackUp
                     }
                     break;
                 case RandomRead:
-                    if (SendCount < RandomPlcSendBuffer.Count)
+                    if (SendCount < PlcSendBuffer.Count)
                     {
-                        var SData = RandomPlcSendBuffer.ElementAtOrDefault(SendCount);
+                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
                         if (SData != null)
                         {
                             tClient.Send(SData);//ランダム読み出しコマンド送信
@@ -320,16 +320,16 @@ namespace PLCDataBackUp
                         if (ReadReceiveDataCheck() == 0)
                         {
                             ReceiveDataMemorys.Clear();
-                            ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, RandomPlcSendBuffer);
+                            ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
                             RandomReciveDataSave();
                         }
                         SendCount = 0;
                     }
                     break;
                 case RandomWrite:
-                    if (SendCount < RandomPlcSendBuffer.Count)
+                    if (SendCount < PlcSendBuffer.Count)
                     {
-                        var SData = RandomPlcSendBuffer.ElementAtOrDefault(SendCount);
+                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
                         if (SData != null)
                         {
                             tClient.Send(SData);//ランダム書き込みコマンド送信
@@ -815,7 +815,7 @@ namespace PLCDataBackUp
                 return;
             }
             var sraList = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
-            RandomPlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
+            PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
          }
 
 
@@ -877,7 +877,6 @@ namespace PLCDataBackUp
         {
             RowCount = 0;
             SendCommand = RandomWrite;//ランダム書き込みコマンド 
-            ReciveDataBufffer.Clear();
             string FileName = randomWritePlcSend.FileSelect();
             if (!string.IsNullOrWhiteSpace(FileName))
             {
@@ -924,7 +923,7 @@ namespace PLCDataBackUp
                     var result1 = blist.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
 
                     var swaList = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
-                    RandomPlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
+                    PlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
                     PlcDataSend();
                     RowCount++;
                 }
