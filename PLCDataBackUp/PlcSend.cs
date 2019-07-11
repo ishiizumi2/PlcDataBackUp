@@ -22,7 +22,13 @@ namespace PLCDataBackUp
         protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
 
         internal string StartTime { get; set; }
-        
+        internal string DStartAddress { get; set; }
+        internal string DEndAddress { get; set; }
+        internal string RStartAddress { get; set; }
+        internal string REndAddress { get; set; }
+        internal string WStartAddress { get; set; }
+        internal string WEndAddress { get; set; }
+
         public abstract string Commandcreate(int count,string senddata);
 
         public abstract List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas,List<string> PlcSendBuffer);

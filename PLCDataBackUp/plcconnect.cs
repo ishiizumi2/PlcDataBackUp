@@ -224,8 +224,20 @@ namespace PLCDataBackUp
         private void button1_Click(object sender, EventArgs e)
         {
             int devicecode = 0;
+
+            if (AdressCheck())
+            {
+
+            }
+            else
+            {
+                return;
+            }
+
             if (!ReadOutStartAddressSet())
                 return;
+
+
 
             for(long devicecnt = 0; devicecnt <3 ; devicecnt++)
             {
@@ -968,6 +980,80 @@ namespace PLCDataBackUp
                 timer1.Interval = 1000;
                 timer2.Interval = 1000;
             }
+        }
+
+        private Boolean AdressCheck()
+        {
+            long StartAddress = 0, EndAddress = 0;
+
+            for (int i = 0; i < 3; i++)
+            {
+                //TextBoxをさがす。子コントロールも検索する。
+                Control st = this.Controls["StartAdd" + (i + 1).ToString()];
+                //TextBoxが見つかれば、Textの値を数値変換する
+                if (st != null)
+                {
+                    if (!string.IsNullOrEmpty(((TextBox)st).Text))
+                    {
+                        if (i < 2)
+                            StartAddress = long.Parse(((TextBox)st).Text);//10進法
+                        else
+                            StartAddress = Convert.ToInt64(((TextBox)st).Text, 16);//16進法
+                    }
+                    else
+                    {
+                        MessageBox.Show("アドレスが設定されていません",
+                                        "エラー",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                        return false;
+                    }
+                }
+                //TextBoxをさがす。子コントロールも検索する。
+                Control en = this.Controls["EndAdd" + (i + 1).ToString()];
+                //TextBoxが見つかれば、Textの値を数値変換する
+                if (en != null)
+                {
+                    if (!string.IsNullOrEmpty(((TextBox)en).Text))
+                    {
+                        if (i < 2)
+                            EndAddress = long.Parse(((TextBox)en).Text);//10進法
+                        else
+                            EndAddress = Convert.ToInt64(((TextBox)en).Text, 16);//16進法
+                    }
+                    else
+                    {
+                        MessageBox.Show("アドレスが設定されていません",
+                                        "エラー",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                        return false;
+                    }
+                    if (EndAddress < StartAddress)
+                    {
+                        MessageBox.Show("アドレスの設定が間違っています",
+                                        "エラー",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                        return false;
+                    }
+                }
+
+                for (long j = 0; j < ArrayCount; j++)
+                {
+                    ReadOutAddress[i, j, 0] = (long)(StartAddress + MaxLength * j);//開始Address
+                    if ((StartAddress + MaxLength * (j + 1)) <= EndAddress)
+                    {
+                        ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
+                    }
+                    else
+                    {
+                        ReadOutAddress[i, j, 1] = (long)(EndAddress - (StartAddress + MaxLength * j) + 1);//最終読み出しワード数
+                        break;
+                    }
+                }
+            }
+            return true;
         }
      }
 
