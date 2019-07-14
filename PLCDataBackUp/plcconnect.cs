@@ -26,6 +26,7 @@ namespace PLCDataBackUp
         TcpClient tClient = new TcpClient();
         RandomReadPlcSend randomReadPlcSend = new RandomReadPlcSend();
         RandomWritePlcSend randomWritePlcSend = new RandomWritePlcSend();
+        ContinuityReadPlcSend continuityReadPlcSend = new ContinuityReadPlcSend();
         long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
         int SendCount = 0; //送信データカウント
         string StartTime;
@@ -34,6 +35,7 @@ namespace PLCDataBackUp
         string[] lines;
         int RowCount = 0; //ランダム書き込み用の配列のカウント
        
+
         enum Device
         {
             D,R,W
@@ -227,7 +229,12 @@ namespace PLCDataBackUp
 
             if (AdressCheck())
             {
-
+                continuityReadPlcSend.DStartAddress = StartAdd1.Text;
+                continuityReadPlcSend.RStartAddress = StartAdd2.Text;
+                continuityReadPlcSend.WStartAddress = StartAdd3.Text;
+                continuityReadPlcSend.DEndAddress   = EndAdd1.Text;
+                continuityReadPlcSend.REndAddress   = EndAdd2.Text;
+                continuityReadPlcSend.WEndAddress   = EndAdd3.Text;
             }
             else
             {
