@@ -229,12 +229,12 @@ namespace PLCDataBackUp
 
             if (AdressCheck())
             {
-                continuityReadPlcSend.DStartAddress = StartAdd1.Text;
-                continuityReadPlcSend.RStartAddress = StartAdd2.Text;
-                continuityReadPlcSend.WStartAddress = StartAdd3.Text;
-                continuityReadPlcSend.DEndAddress   = EndAdd1.Text;
-                continuityReadPlcSend.REndAddress   = EndAdd2.Text;
-                continuityReadPlcSend.WEndAddress   = EndAdd3.Text;
+                continuityReadPlcSend.StartAddress[0] = Convert.ToInt32(StartAdd1.Text);
+                continuityReadPlcSend.StartAddress[1] = Convert.ToInt32(StartAdd2.Text);
+                continuityReadPlcSend.StartAddress[2] = Convert.ToInt32(StartAdd3.Text,16);
+                continuityReadPlcSend.EndAddress[0]   = Convert.ToInt32(EndAdd1.Text);
+                continuityReadPlcSend.EndAddress[1]   = Convert.ToInt32(EndAdd2.Text);
+                continuityReadPlcSend.EndAddress[2]   = Convert.ToInt32(EndAdd3.Text,16);
             }
             else
             {
@@ -1000,7 +1000,7 @@ namespace PLCDataBackUp
                 //TextBoxが見つかれば、Textの値を数値変換する
                 if (st != null)
                 {
-                    if (!string.IsNullOrEmpty(((TextBox)st).Text))
+                    if (string.IsNullOrEmpty(((TextBox)st).Text))
                     {
                         if (i < 2)
                             StartAddress = long.Parse(((TextBox)st).Text);//10進法

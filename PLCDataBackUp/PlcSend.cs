@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Windows.Forms;
+using System.Data;
+
+
 
 namespace PLCDataBackUp
 {
@@ -12,6 +15,7 @@ namespace PLCDataBackUp
     {
         //Socketクライアント
         TcpClient tClient = new TcpClient();
+        protected const long MaxLength = (long)480;//960;
         protected const int RandomReadMax = 192;//ランダム読み出し最大
         protected const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
         protected const int ArrayCount = 68; //32767/MaxLingthの数
@@ -24,12 +28,14 @@ namespace PLCDataBackUp
         protected long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
 
         internal string StartTime { get; set; }
-        internal string DStartAddress { get; set; }
-        internal string DEndAddress { get; set; }
-        internal string RStartAddress { get; set; }
-        internal string REndAddress { get; set; }
-        internal string WStartAddress { get; set; }
-        internal string WEndAddress { get; set; }
+        internal int[] StartAddress
+        {
+             get;set; 
+        }
+        public int[] EndAddress
+        {
+            get;set;
+        }
 
         public abstract string Commandcreate(int count,string senddata);
 
@@ -398,6 +404,7 @@ namespace PLCDataBackUp
     /// /// </summary>
     class ContinuityReadPlcSend : PlcSend
     {
+
         /// <summary>
         /// PLCへの送信文を作成
         /// </summary>
@@ -550,76 +557,23 @@ namespace PLCDataBackUp
         /// </summary>
         private Boolean ReadOutStartAddressSet()
         {
-            long StartAddress = 0, EndAddress = 0;
-
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < ArrayCount; j++)
                     for (int k = 0; k < 2; k++)
                         ReadOutAddress[i, j, k] = (long)-1;
 
-            for (int AddressCnt = 0; AddressCnt < 3; AddressCnt++)
+            for (int i = 0;i < 3;i++)
             {
-                //TextBoxをさがす。子コントロールも検索する。
-                Control st = this.Controls["StartAdd" + (AddressCnt + 1).ToString()];
-                //TextBoxが見つかれば、Textの値を数値変換する
-                if (st != null)
-                {
-                    if (!string.IsNullOrEmpty(((TextBox)st).Text))
-                    {
-                        if (AddressCnt < 2)
-                            StartAddress = long.Parse(((TextBox)st).Text);//10進法
-                        else
-                            StartAddress = Convert.ToInt64(((TextBox)st).Text, 16);//16進法
-                    }
-                    else
-                    {
-                        MessageBox.Show("アドレスが設定されていません",
-                                        "エラー",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return false;
-                    }
-                }
-                //TextBoxをさがす。子コントロールも検索する。
-                Control en = this.Controls["EndAdd" + (AddressCnt + 1).ToString()];
-                //TextBoxが見つかれば、Textの値を数値変換する
-                if (en != null)
-                {
-                    if (!string.IsNullOrEmpty(((TextBox)en).Text))
-                    {
-                        if (AddressCnt < 2)
-                            EndAddress = long.Parse(((TextBox)en).Text);//10進法
-                        else
-                            EndAddress = Convert.ToInt64(((TextBox)en).Text, 16);//16進法
-                    }
-                    else
-                    {
-                        MessageBox.Show("アドレスが設定されていません",
-                                        "エラー",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return false;
-                    }
-                    if (EndAddress < StartAddress)
-                    {
-                        MessageBox.Show("アドレスの設定が間違っています",
-                                        "エラー",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return false;
-                    }
-                }
-
                 for (long j = 0; j < ArrayCount; j++)
                 {
-                    ReadOutAddress[AddressCnt, j, 0] = (long)(StartAddress + MaxLength * j);//開始Address
-                    if ((StartAddress + MaxLength * (j + 1)) <= EndAddress)
+                    ReadOutAddress[i, j, 0] = (long)(StartAddress[i] + MaxLength * j);//開始Address
+                    if ((StartAddress[i] + MaxLength * (j + 1)) <= EndAddress[i])
                     {
-                        ReadOutAddress[AddressCnt, j, 1] = (long)MaxLength;//読み出しワード数
+                        ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
                     }
                     else
                     {
-                        ReadOutAddress[AddressCnt, j, 1] = (long)(EndAddress - (StartAddress + MaxLength * j) + 1);//最終読み出しワード数
+                        ReadOutAddress[i, j, 1] = (long)(EndAddress[i] - (StartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
                         break;
                     }
                 }
