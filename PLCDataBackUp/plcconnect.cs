@@ -241,8 +241,7 @@ namespace PLCDataBackUp
                 return;
             }
 
-            if (!ReadOutStartAddressSet())
-                return;
+           
 
 
 
@@ -835,8 +834,9 @@ namespace PLCDataBackUp
             }
             var sraList = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
             PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
-         }
-
+            
+        }
+    
 
         /// <summary>
         /// ランダム読み出しスタート
