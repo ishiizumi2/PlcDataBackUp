@@ -26,11 +26,11 @@ namespace PLCDataBackUp
         protected long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
 
         internal string StartTime { get; set; }
-        internal int[] StartAddress
+        internal long[] StartAddress
         {
              get;set; 
         }
-        public int[] EndAddress
+        public long[] EndAddress
         {
             get;set;
         }
@@ -553,7 +553,7 @@ namespace PLCDataBackUp
         /// <summary>
         /// 読み出しコマンドのデバイスコード,先頭アドレス,データ数を設定する
         /// </summary>
-        private Boolean ReadOutStartAddressSet()
+        private void ReadOutStartAddressSet()
         {
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < ArrayCount; j++)
@@ -576,11 +576,7 @@ namespace PLCDataBackUp
                     }
                 }
             }
-            return true;
+
         }
-
     }
-
- 
-
 }

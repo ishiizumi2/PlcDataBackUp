@@ -229,12 +229,12 @@ namespace PLCDataBackUp
 
             if (AdressCheck())
             {
-                continuityReadPlcSend.StartAddress[0] = Convert.ToInt32(StartAdd1.Text);
-                continuityReadPlcSend.StartAddress[1] = Convert.ToInt32(StartAdd2.Text);
-                continuityReadPlcSend.StartAddress[2] = Convert.ToInt32(StartAdd3.Text,16);
-                continuityReadPlcSend.EndAddress[0]   = Convert.ToInt32(EndAdd1.Text);
-                continuityReadPlcSend.EndAddress[1]   = Convert.ToInt32(EndAdd2.Text);
-                continuityReadPlcSend.EndAddress[2]   = Convert.ToInt32(EndAdd3.Text,16);
+                continuityReadPlcSend.StartAddress[0] = Convert.ToInt64(StartAdd1.Text);   //Dアドレス
+                continuityReadPlcSend.StartAddress[1] = Convert.ToInt64(StartAdd2.Text);   //Rアドレス　
+                continuityReadPlcSend.StartAddress[2] = Convert.ToInt64(StartAdd3.Text,16);//Wアドレス　16進数
+                continuityReadPlcSend.EndAddress[0]   = Convert.ToInt64(EndAdd1.Text);     //Dアドレス
+                continuityReadPlcSend.EndAddress[1]   = Convert.ToInt64(EndAdd2.Text);     //Rアドレス
+                continuityReadPlcSend.EndAddress[2]   = Convert.ToInt64(EndAdd3.Text,16);  //Wアドレス 16進数
             }
             else
             {
