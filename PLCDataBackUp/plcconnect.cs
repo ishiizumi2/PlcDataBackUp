@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace PLCDataBackUp
 {
+
     public partial class plcconnect : Form
     {
         const long MaxLength = (long)480;//960;
