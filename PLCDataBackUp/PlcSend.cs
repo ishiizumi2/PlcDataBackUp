@@ -7,8 +7,6 @@ using System.IO;
 using System.Windows.Forms;
 using System.Data;
 
-
-
 namespace PLCDataBackUp
 {
     abstract class PlcSend
