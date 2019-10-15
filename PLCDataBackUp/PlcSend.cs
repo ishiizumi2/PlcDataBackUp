@@ -26,11 +26,11 @@ namespace PLCDataBackUp
         protected long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
 
         internal string StartTime { get; set; }
-        internal long[] StartAddress
+        internal long StartAddress1
         {
              get;set; 
         }
-        public long[] EndAddress
+        public long EndAddress1
         {
             get;set;
         }
@@ -559,24 +559,24 @@ namespace PLCDataBackUp
                 for (int j = 0; j < ArrayCount; j++)
                     for (int k = 0; k < 2; k++)
                         ReadOutAddress[i, j, k] = (long)-1;
-
-            for (int i = 0;i < 3;i++)
-            {
-                for (long j = 0; j < ArrayCount; j++)
+           /* 
+            for (int i = 0; i < 3; i++)
                 {
-                    ReadOutAddress[i, j, 0] = (long)(StartAddress[i] + MaxLength * j);//開始Address
-                    if ((StartAddress[i] + MaxLength * (j + 1)) <= EndAddress[i])
+                    for (long j = 0; j < ArrayCount; j++)
                     {
-                        ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
-                    }
-                    else
-                    {
-                        ReadOutAddress[i, j, 1] = (long)(EndAddress[i] - (StartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
-                        break;
+                        ReadOutAddress[i, j, 0] = (long)(StartAddress[i] + MaxLength * j);//開始Address
+                        if ((StartAddress[i] + MaxLength * (j + 1)) <= EndAddress[i])
+                        {
+                            ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
+                        }
+                        else
+                        {
+                            ReadOutAddress[i, j, 1] = (long)(EndAddress[i] - (StartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
+                            break;
+                        }
                     }
                 }
-            }
-
+             */  
         }
     }
 }

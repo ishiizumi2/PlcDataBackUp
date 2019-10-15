@@ -230,12 +230,13 @@ namespace PLCDataBackUp
 
             if (AdressCheck())
             {
-                continuityReadPlcSend.StartAddress[0] = Convert.ToInt64(StartAdd1.Text);   //Dアドレス
-                continuityReadPlcSend.StartAddress[1] = Convert.ToInt64(StartAdd2.Text);   //Rアドレス　
-                continuityReadPlcSend.StartAddress[2] = Convert.ToInt64(StartAdd3.Text,16);//Wアドレス　16進数
-                continuityReadPlcSend.EndAddress[0]   = Convert.ToInt64(EndAdd1.Text);     //Dアドレス
-                continuityReadPlcSend.EndAddress[1]   = Convert.ToInt64(EndAdd2.Text);     //Rアドレス
-                continuityReadPlcSend.EndAddress[2]   = Convert.ToInt64(EndAdd3.Text,16);  //Wアドレス 16進数
+                continuityReadPlcSend.StartAddress1 = Convert.ToInt64(StartAdd1.Text);   //Dアドレス
+                //continuityReadPlcSend.StartAddress[1] = Convert.ToInt64(StartAdd2.Text);   //Rアドレス　
+                //continuityReadPlcSend.StartAddress[2] = Convert.ToInt64(StartAdd3.Text,16);//Wアドレス　16進数
+                continuityReadPlcSend.EndAddress1   = Convert.ToInt64(EndAdd1.Text);     //Dアドレス
+                //continuityReadPlcSend.EndAddress[1]   = Convert.ToInt64(EndAdd2.Text);     //Rアドレス
+                //continuityReadPlcSend.EndAddress[2]   = Convert.ToInt64(EndAdd3.Text,16);  //Wアドレス 16進数
+                
             }
             else
             {
@@ -997,11 +998,12 @@ namespace PLCDataBackUp
             for (int i = 0; i < 3; i++)
             {
                 //TextBoxをさがす。子コントロールも検索する。
-                Control st = this.Controls["StartAdd" + (i + 1).ToString()];
+                string cname = "StartAdd" + (i + 1).ToString();
+                Control st = this.Controls[cname];
                 //TextBoxが見つかれば、Textの値を数値変換する
                 if (st != null)
                 {
-                    if (string.IsNullOrEmpty(((TextBox)st).Text))
+                    if (!string.IsNullOrEmpty(((TextBox)st).Text))
                     {
                         if (i < 2)
                             StartAddress = long.Parse(((TextBox)st).Text);//10進法
