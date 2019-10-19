@@ -26,14 +26,12 @@ namespace PLCDataBackUp
         protected long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
 
         internal string StartTime { get; set; }
-        internal long StartAddress1
-        {
-             get;set; 
-        }
-        public long EndAddress1
-        {
-            get;set;
-        }
+        internal long StartAddress1 { get;set; }
+        internal long StartAddress2 { get; set; }
+        internal long StartAddress3 { get; set; }
+        internal long EndAddress1 { get;set; }
+        internal long EndAddress2 { get; set; }
+        internal long EndAddress3 { get; set; }
 
         public abstract string Commandcreate(int count,string senddata);
 
@@ -271,7 +269,7 @@ namespace PLCDataBackUp
         /// <returns></returns>
         public override string AddressSetiing(List<int> OneraList)
         {
-            string str = "";
+            string senddata = "";
             string DeviceCode = "A8"; //Dアドレス
             foreach (var sdat in OneraList)
             {
@@ -280,15 +278,15 @@ namespace PLCDataBackUp
                 //アドレスの指定　P171 デバイス　デバイスコード
                 //                      L -  H     D
                 //                      000000     A8
-                str = str + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode;
+                senddata = senddata + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode;
             }
-            return str;
+            return senddata;
         }
 
         //未使用
         public override string AddressSetiing(List<(string x, string y)> OnewaList)
         {
-            string str = "";
+            string str="";
             return str;
         }
 
@@ -500,19 +498,12 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ralistから送信データList PlcSendBuffer<>を作成
+        /// StartAddress,EndAddresから送信データList PlcSendBuffer<>を作成
         /// </summary>
         /// <param name="ralist"></param>
         public override List<string> AddressSet(List<int> sraList)
         {
-            int i = 0;
-            PlcSendBuffer.Clear();
-            while (i * RandomReadMax < sraList.Count())
-            {
-                var OneraList = sraList.Skip(i * RandomReadMax).Take(RandomReadMax).ToList(); //1回読み込み分のデータを取り出す
-                PlcSendBuffer.Add(Commandcreate(OneraList.Count(), AddressSetiing(OneraList)));
-                i++;
-            }
+           
 
             return PlcSendBuffer;
         }
