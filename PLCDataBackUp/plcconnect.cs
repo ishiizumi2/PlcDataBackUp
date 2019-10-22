@@ -47,8 +47,6 @@ namespace PLCDataBackUp
         List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
         List<string> ReciveDatas = new List<string>();
         List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
-        List<long> StartAddressList = new List<long>();
-        List<long> EndAddressList = new List<long>(); 
 
 
 
@@ -229,32 +227,22 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
-            int devicecode = 0;
-            StartAddressList.Clear();
-            EndAddressList.Clear();
-
+           
             if (AdressCheck())
             {
-                continuityReadPlcSend.StartAddress1 = Convert.ToInt64(StartAdd1.Text);   //Dアドレス
-                continuityReadPlcSend.StartAddress2 = Convert.ToInt64(StartAdd2.Text);   //Rアドレス　
-                continuityReadPlcSend.StartAddress3 = Convert.ToInt64(StartAdd3.Text, 16);//Wアドレス　16進数
-                continuityReadPlcSend.EndAddress1 = Convert.ToInt64(EndAdd1.Text);     //Dアドレス
-                continuityReadPlcSend.EndAddress2 = Convert.ToInt64(EndAdd2.Text);     //Rアドレス
-                continuityReadPlcSend.EndAddress3 = Convert.ToInt64(EndAdd3.Text, 16);  //Wアドレス 16進数                
+                continuityReadPlcSend.AddressSet();
             }
             else
             {
                 return;
             }
-
-            var AddrssList = StartAddressList.Zip(EndAddressList,
-                                                   (Start, End) => Tuple.Create(Start, End));
+            
 
            
 
 
 
-
+            /*
 
             for (long devicecnt = 0; devicecnt <3 ; devicecnt++)
             {
@@ -283,6 +271,7 @@ namespace PLCDataBackUp
                         break;
                 }
             }
+           
             dataGridView1.DataSource = SendDatas.ToList<SendData>();
             dataGridView1.Columns[0].DefaultCellStyle.Format = "X";
 
@@ -291,6 +280,7 @@ namespace PLCDataBackUp
             SendCommand = ContinuityRead;//ワード単位の一括読出
             ReciveDataBufffer.Clear();
             PlcDataSend();//最初のデータ送信
+            */
         }
 
         /// <summary>
@@ -315,7 +305,7 @@ namespace PLCDataBackUp
                             StartAddress = long.Parse(((TextBox)st).Text);//10進法
                         else
                             StartAddress = Convert.ToInt64(((TextBox)st).Text, 16);//16進法
-                        StartAddressList.Add(StartAddress);
+                        continuityReadPlcSend.PstartAddress[i] = StartAddress;
                     }
                     else
                     {
@@ -337,7 +327,7 @@ namespace PLCDataBackUp
                             EndAddress = long.Parse(((TextBox)en).Text);//10進法
                         else
                             EndAddress = Convert.ToInt64(((TextBox)en).Text, 16);//16進法
-                        EndAddressList.Add(EndAddress);
+                        continuityReadPlcSend.PendAddress[i] = StartAddress;
                     }
                     else
                     {

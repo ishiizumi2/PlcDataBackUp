@@ -22,16 +22,10 @@ namespace PLCDataBackUp
         protected string CPUwatchtimer = "1000";
         protected string Sdata;
         protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
-        protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
-        protected long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
+        protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用List
+       
 
         internal string StartTime { get; set; }
-        internal long StartAddress1 { get;set; }
-        internal long StartAddress2 { get; set; }
-        internal long StartAddress3 { get; set; }
-        internal long EndAddress1 { get;set; }
-        internal long EndAddress2 { get; set; }
-        internal long EndAddress3 { get; set; }
 
         public abstract string Commandcreate(int count,string senddata);
 
@@ -40,6 +34,7 @@ namespace PLCDataBackUp
 
         public abstract List<string> AddressSet(List<int> sraList);
         public abstract List<string> AddressSet(List<(string x, string y)> swaList);
+        public abstract List<string> AddressSet();
 
         public abstract string AddressSetiing(List<int> OneraList);
         public abstract string AddressSetiing(List<(string x, string y)> OnewaList);
@@ -259,8 +254,14 @@ namespace PLCDataBackUp
         //未使用
         public override List<string> AddressSet(List<(string x, string y)> swaList)
         {
-            return PlcSendBuffer; 
+            return PlcSendBuffer;
         }
+        //未使用
+        public override List<string> AddressSet()
+        {
+            return PlcSendBuffer;
+        }
+
         /// <summary>
         /// PlcSendBuffer用データを作成
         /// //RAListから送信用アドレスデータを作成
@@ -343,6 +344,11 @@ namespace PLCDataBackUp
             return PlcSendBuffer;
         }
 
+        //未使用
+        public override List<string> AddressSet()
+        {
+            return PlcSendBuffer;
+        }
 
         public override List<string> AddressSet(List<(string x, string y)> swaList)
         {
@@ -400,6 +406,30 @@ namespace PLCDataBackUp
     /// /// </summary>
     class ContinuityReadPlcSend : PlcSend
     {
+
+        List<SendData> SendDatas = new List<SendData>();
+
+
+        private long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
+      
+        private long[] Svalues = new long[3];
+        private long[] Evalues = new long[3];
+
+        internal long[] PstartAddress
+        {
+            get
+            {
+                return Svalues;
+            }
+        }
+        internal long[] PendAddress
+        {
+            get
+            {
+                return Evalues;
+            }
+
+        }
 
         /// <summary>
         /// PLCへの送信文を作成
@@ -497,14 +527,10 @@ namespace PLCDataBackUp
             return ReceiveDataMemorys;
         }
 
-        /// <summary>
-        /// StartAddress,EndAddresから送信データList PlcSendBuffer<>を作成
-        /// </summary>
-        /// <param name="ralist"></param>
+       
+        //  未使用
         public override List<string> AddressSet(List<int> sraList)
         {
-           
-
             return PlcSendBuffer;
         }
 
@@ -513,6 +539,44 @@ namespace PLCDataBackUp
         {
             return PlcSendBuffer;
         }
+
+        //
+        public override List<string> AddressSet()
+        {
+            int devicecode = 0;
+
+            for (long devicecnt = 0; devicecnt < 3; devicecnt++)
+            {
+                switch (devicecnt)
+                {
+                    case 0:
+                        devicecode = 0xA8;
+                        break;
+                    case 1:
+                        devicecode = 0xAF;
+                        break;
+                    case 2:
+                        devicecode = 0xB4;
+                        break;
+                    default:
+                        break;
+                }
+
+                for (int i = 0; i < ArrayCount; i++)
+                {
+                    if (ReadOutAddress[devicecnt, i, 0] != (long)-1)
+                    {
+                        SendDatas.Add(new SendData(devicecode, ReadOutAddress[devicecnt, i, 0], ReadOutAddress[devicecnt, i, 1]));//Buferに送信データを代入
+                    }
+                    else
+                        break;
+                }
+            }
+
+            return PlcSendBuffer;
+        }
+
+
         /// <summary>
         /// PlcSendBuffer用データを作成
         /// //RAListから送信用アドレスデータを作成
@@ -550,24 +614,27 @@ namespace PLCDataBackUp
                 for (int j = 0; j < ArrayCount; j++)
                     for (int k = 0; k < 2; k++)
                         ReadOutAddress[i, j, k] = (long)-1;
-           /* 
+            
             for (int i = 0; i < 3; i++)
                 {
                     for (long j = 0; j < ArrayCount; j++)
                     {
-                        ReadOutAddress[i, j, 0] = (long)(StartAddress[i] + MaxLength * j);//開始Address
-                        if ((StartAddress[i] + MaxLength * (j + 1)) <= EndAddress[i])
+                        ReadOutAddress[i, j, 0] = (long)(PstartAddress[i] + MaxLength * j);//開始Address
+                        if ((PstartAddress[i] + MaxLength * (j + 1)) <= PendAddress[i])
                         {
                             ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
                         }
                         else
                         {
-                            ReadOutAddress[i, j, 1] = (long)(EndAddress[i] - (StartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
+                            ReadOutAddress[i, j, 1] = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
                             break;
                         }
                     }
                 }
-             */  
+               
         }
+
+    
     }
 }
+
