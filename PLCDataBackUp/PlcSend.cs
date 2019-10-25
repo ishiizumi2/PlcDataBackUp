@@ -584,7 +584,7 @@ namespace PLCDataBackUp
             foreach(var SData in SendDatas)
             {
                 PlcSendBuffer.Add(Commandcreate(0, AddressSetiing(SData.Senddevicecode, SData.SendStartAddress, SData.SendReadLen)));
-
+                
             }
 
             return PlcSendBuffer;
@@ -595,6 +595,8 @@ namespace PLCDataBackUp
         /// </summary>
         private void ReadOutStartAddressSet()
         {
+           
+
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < ArrayCount; j++)
                     for (int k = 0; k < 2; k++)
@@ -605,6 +607,7 @@ namespace PLCDataBackUp
                 for (long j = 0; j < ArrayCount; j++)
                 {
                     ReadOutAddress[i, j, 0] = (long)(PstartAddress[i] + MaxLength * j);//開始Address
+                    long aa = (long)(PstartAddress[i] + MaxLength * j);//開始Address);
                     if ((PstartAddress[i] + MaxLength * (j + 1)) <= PendAddress[i])
                     {
                         ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
@@ -612,6 +615,9 @@ namespace PLCDataBackUp
                     else
                     {
                         ReadOutAddress[i, j, 1] = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
+                        
+                        long bb = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
+
                         break;
                     }
                 }

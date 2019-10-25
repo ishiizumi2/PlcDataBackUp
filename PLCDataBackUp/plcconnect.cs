@@ -230,15 +230,20 @@ namespace PLCDataBackUp
            
             if (AdressCheck())
             {
-                continuityReadPlcSend.AddressSet();
+                PlcSendBuffer = continuityReadPlcSend.AddressSet();
             }
             else
             {
                 return;
             }
+            //Bufferのデータを送信する
+            SendCount = 0;
+            SendCommand = ContinuityRead;//ワード単位の一括読出
+            ReciveDataBufffer.Clear();
+            PlcDataSend();//最初のデータ送信
             
 
-           
+
 
 
 
@@ -327,7 +332,7 @@ namespace PLCDataBackUp
                             EndAddress = long.Parse(((TextBox)en).Text);//10進法
                         else
                             EndAddress = Convert.ToInt64(((TextBox)en).Text, 16);//16進法
-                        continuityReadPlcSend.PendAddress[i] = StartAddress;
+                        continuityReadPlcSend.PendAddress[i] = EndAddress;
                     }
                     else
                     {
@@ -346,6 +351,12 @@ namespace PLCDataBackUp
                         return false;
                     }
                 }
+                switch(i)
+                {
+                    case 0:
+
+                        break;
+                }
 
             }
             return true;
@@ -359,6 +370,18 @@ namespace PLCDataBackUp
             switch (SendCommand)
             {
                 case ContinuityRead:
+                    if (SendCount < PlcSendBuffer.Count)
+                    {
+                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
+                        if (SData != null)
+                        {
+                            tClient.Send(SData);//ランダム読み出しコマンド送信
+                            DebugText(SData);
+                            SendCount++;
+                        }
+                    }
+                   
+                    /*
                     if (SendCount < SendDatas.Count)
                     {
                         SendData SData = SendDatas.ElementAtOrDefault(SendCount);
@@ -368,6 +391,7 @@ namespace PLCDataBackUp
                             SendCount++;
                         }
                     }
+                    */
                     else //受信完了
                     {
                         if (ReadReceiveDataCheck() == 0)
