@@ -457,49 +457,53 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダム読み出し用
+        /// 一括読み出し用
         /// 要求したデータをlist<>ReceiveDataMemorysに設定
         ///  ReciveDatas と SendatasからデータをマージしてReceiveDataMemorysに代入する
         /// </summary>
         internal override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> PlcSendBuffer)
         {
-            string DeviceKind = "D";
-            List<string> addressList = new List<string>();
-            List<int> dataList = new List<int>();
+            string DeviceKind = "";
+            string s = "";
 
-            foreach (var RRdata in ReciveDatas.Select((data, index) => new { data, index }))
+            foreach (var ReceiveData in ReciveDatas.Select((data, index) => new { data, index }))
             {
-                string senddata = PlcSendBuffer.ElementAtOrDefault(RRdata.index);
+                SendData senddata = SendDatas.ElementAtOrDefault(ReceiveData.index);
                 if (senddata != null)
                 {
-                    //DアドレスのList<string>を作成する
-                    int Datacount = (senddata.Length - 33) / 8;
-                    for (int i = 0; i < Datacount; i++)
-                    {
-                        //1word 8byte  P171  
-                        //address   L  -  H  デバイスコード
-                        //          12 34 56 78 
-                        string address = senddata.Substring(34 + i * 8, 8);
-                        addressList.Add(DeviceKind + Convert.ToInt32((address.Substring(2, 2) + address.Substring(0, 2)), 16).ToString("D4"));
-                    }
-
-                    //読み込んだデータのlist<int>を作成する
+                    int Datacount = 0;
                     Boolean Dataend = true;
-                    int rdatacount = 0;
                     do
                     {
                         try
                         {
-                            if (RRdata.data.Length > rdatacount * 4)
+                            if (ReceiveData.data.Length > Datacount * 4)
                             {
-                                string Rdata = RRdata.data.Substring(rdatacount * 4, 4);
-
+                                string Rdata = ReceiveData.data.Substring(Datacount * 4, 4);
                                 if (!string.IsNullOrEmpty(Rdata))
                                 {
-                                    dataList.Add(Convert.ToInt32((Rdata.Substring(2, 2) + Rdata.Substring(0, 2)), 16));
 
+                                    switch (senddata.Senddevicecode)
+                                    {
+                                        case 0xA8:
+                                            DeviceKind = "D";
+                                            s = DeviceKind + (senddata.SendStartAddress + Datacount).ToString();
+                                            break;
+                                        case 0xAF:
+                                            DeviceKind = "R";
+                                            s = DeviceKind + (senddata.SendStartAddress + Datacount).ToString();
+                                            break;
+                                        case 0xB4:
+                                            DeviceKind = "W";
+                                            s = DeviceKind + (senddata.SendStartAddress + Datacount).ToString("X"); //16進数文字に変換
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    int d = Convert.ToInt32((Rdata.Substring(2, 2) + Rdata.Substring(0, 2)), 16);
+                                    ReceiveDataMemorys.Add(new ReceiveDataMemory(s, d));
                                 }
-                                rdatacount++;
+                                Datacount++;
                             }
                             else
                             {
@@ -514,12 +518,7 @@ namespace PLCDataBackUp
                     while (Dataend);
                 }
             }
-            ReceiveDataMemorys.Clear();
 
-            foreach (var adata in addressList.Zip(dataList, (address, data) => Tuple.Create(address, data)))//タプル
-            {
-                ReceiveDataMemorys.Add(new ReceiveDataMemory(adata.Item1, adata.Item2));//本当は無駄　ReceiveDataMemorysを返すために行っている  
-            }
 
             return ReceiveDataMemorys;
         }
@@ -583,8 +582,7 @@ namespace PLCDataBackUp
 
             foreach(var SData in SendDatas)
             {
-                PlcSendBuffer.Add(Commandcreate(0, AddressSetiing(SData.Senddevicecode, SData.SendStartAddress, SData.SendReadLen)));
-                
+                PlcSendBuffer.Add(Commandcreate(0, AddressSetiing(SData.Senddevicecode, SData.SendStartAddress, SData.SendReadLength)));
             }
 
             return PlcSendBuffer;
@@ -638,22 +636,25 @@ namespace PLCDataBackUp
             return str;
         }
 
-
-        
-        public override string AddressSetiing(int devicecode, long StartAddress, long ReadLen)
+        /// <summary>
+        /// 一括読み出しデータ設定用
+        /// </summary>
+        /// <param name="devicecode">デバイスの種類D,R,W</param>
+        /// <param name="StartAddress">先頭アドレス</param>
+        /// <param name="ReadLength">読み出しデータ個数</param>
+        /// <returns></returns>
+        public override string AddressSetiing(int devicecode, long StartAddress, long ReadLength)
         {
             string senddata = "";          
             int addLo = (int)StartAddress & 0xff;
             int addHi = (int)StartAddress >> 8;
-            int itemLo = (int)ReadLen & 0xff;
-            int itemHi = (int)ReadLen >> 8;
+            int itemLo = (int)ReadLength & 0xff;
+            int itemHi = (int)ReadLength >> 8;
             string dc = devicecode.ToString("X2");
 
             senddata = addLo.ToString("X2") + addHi.ToString("X2") + "00" + dc + itemLo.ToString("X2") + itemHi.ToString("X2");
 
             return senddata;
-
-
         }
     }
 }

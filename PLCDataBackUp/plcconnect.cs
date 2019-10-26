@@ -138,154 +138,21 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// 読み出しコマンドのデバイスコード,先頭アドレス,データ数を設定する
-        /// </summary>
-        private Boolean ReadOutStartAddressSet()
-        {
-            long StartAddress=0, EndAddress=0;
-
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < ArrayCount; j++)
-                    for (int k = 0; k < 2;k++ )
-                        ReadOutAddress[i, j, k] = (long)-1;
-            
-            for(int AddressCnt=0; AddressCnt<3; AddressCnt++)
-            {
-                //TextBoxをさがす。子コントロールも検索する。
-                Control st = this.Controls["StartAdd"+(AddressCnt+1).ToString()];
-                //TextBoxが見つかれば、Textの値を数値変換する
-                if (st != null)
-                {
-                    if (!string.IsNullOrEmpty(((TextBox)st).Text))
-                    {
-                        if (AddressCnt < 2)
-                            StartAddress = long.Parse(((TextBox)st).Text);//10進法
-                        else 
-                            StartAddress = Convert.ToInt64(((TextBox)st).Text, 16);//16進法
-                    }
-                    else
-                    {
-                        MessageBox.Show("アドレスが設定されていません",
-                                        "エラー",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return false;
-                    }
-                }
-                //TextBoxをさがす。子コントロールも検索する。
-                Control en = this.Controls["EndAdd" + (AddressCnt+1).ToString()];
-                //TextBoxが見つかれば、Textの値を数値変換する
-                if (en != null)
-                {
-                    if (!string.IsNullOrEmpty(((TextBox)en).Text))
-                    {
-                        if (AddressCnt < 2)
-                            EndAddress = long.Parse(((TextBox)en).Text);//10進法
-                        else
-                            EndAddress = Convert.ToInt64(((TextBox)en).Text, 16);//16進法
-                    }
-                    else
-                    {
-                        MessageBox.Show("アドレスが設定されていません",
-                                        "エラー",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return false;
-                    }
-                    if (EndAddress< StartAddress)
-                    {
-                        MessageBox.Show("アドレスの設定が間違っています",
-                                        "エラー",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                        return false;
-                    }
-                }
-
-                for (long j = 0; j < ArrayCount; j++)
-                {
-                    ReadOutAddress[AddressCnt, j, 0] = (long)(StartAddress + MaxLength * j);//開始Address
-                    if ((StartAddress + MaxLength * (j+1)) <= EndAddress)
-                    {
-                        ReadOutAddress[AddressCnt, j, 1] = (long)MaxLength;//読み出しワード数
-                    }
-                    else
-                    {
-                        ReadOutAddress[AddressCnt, j, 1] = (long)(EndAddress - (StartAddress + MaxLength * j) + 1);//最終読み出しワード数
-                        break;
-                    }
-                }
-            }
-            return true;
-        }
-
-
-        /// <summary>
-        /// PLCからのデータ一括読み込みD,R,W
+        /// PLCからのデータ一括読み込み・送信
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
-           
             if (AdressCheck())
             {
                 PlcSendBuffer = continuityReadPlcSend.AddressSet();
+                //Bufferのデータを送信する
+                SendCount = 0;
+                SendCommand = ContinuityRead;//ワード単位の一括読出
+                ReciveDataBufffer.Clear();
+                PlcDataSend();//最初のデータ送信
             }
-            else
-            {
-                return;
-            }
-            //Bufferのデータを送信する
-            SendCount = 0;
-            SendCommand = ContinuityRead;//ワード単位の一括読出
-            ReciveDataBufffer.Clear();
-            PlcDataSend();//最初のデータ送信
-            
-
-
-
-
-
-            /*
-
-            for (long devicecnt = 0; devicecnt <3 ; devicecnt++)
-            {
-                switch(devicecnt)
-                {
-                    case (int)Device.D :
-                        devicecode = 0xA8;
-                        break;
-                    case (int)Device.R :
-                        devicecode = 0xAF;
-                        break;
-                    case (int)Device.W :
-                        devicecode = 0xB4;
-                        break;
-                    default :
-                        break;
-                }
-                
-                for (int i=0;i<ArrayCount;i++)
-                {
-                    if (ReadOutAddress[devicecnt, i, 0] != (long)-1)
-                    {
-                        SendDatas.Add(new SendData(devicecode, ReadOutAddress[devicecnt, i, 0], ReadOutAddress[devicecnt, i, 1]));//Buferに送信データを代入
-                    }
-                    else
-                        break;
-                }
-            }
-           
-            dataGridView1.DataSource = SendDatas.ToList<SendData>();
-            dataGridView1.Columns[0].DefaultCellStyle.Format = "X";
-
-            //Bufferのデータを送信する
-　          SendCount = 0;
-            SendCommand = ContinuityRead;//ワード単位の一括読出
-            ReciveDataBufffer.Clear();
-            PlcDataSend();//最初のデータ送信
-            */
         }
 
         /// <summary>
@@ -380,23 +247,13 @@ namespace PLCDataBackUp
                             SendCount++;
                         }
                     }
-                   
-                    /*
-                    if (SendCount < SendDatas.Count)
-                    {
-                        SendData SData = SendDatas.ElementAtOrDefault(SendCount);
-                        if (SData != null)
-                        {
-                            RequestDataSend(SData.Senddevicecode, SData.SendStartAddress, SData.SendReadLen);
-                            SendCount++;
-                        }
-                    }
-                    */
                     else //受信完了
                     {
                         if (ReadReceiveDataCheck() == 0)
                         {
-                           RequestReceiveDataSet();
+                            ReceiveDataMemorys.Clear();
+                            ReceiveDataMemorys = continuityReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
+                            RandomReciveDataSave();
                         }
                     }
                     break;
@@ -456,27 +313,6 @@ namespace PLCDataBackUp
                 default:
                     break;
             }
-        }
-
-        /// <summary>
-        /// PLCに一括読み出しコマンドを送信する関数
-        /// </summary>
-        /// <param name="devicecode"></param>デバイスコード D,R,W
-        /// <param name="StartAddress"></param>先頭アドレス
-        /// <param name="ReadLen"></param>読み出しワード数
-        private void RequestDataSend(int devicecode,long StartAddress,long ReadLen)
-        {
-            //要求データ長がC0で決まっている
-            string Buf1 = "500000FFFF03000C00100001040000";
-            int addLo = (int)StartAddress & 0xff;
-            int addHi = (int)StartAddress >> 8;
-            int itemLo = (int)ReadLen & 0xff;
-            int itemHi = (int)ReadLen >> 8;
-            string aa = devicecode.ToString("X2");
-
-            Buf1 = Buf1 + addLo.ToString("X2") + addHi.ToString("X2")+ "00"+ aa +itemLo.ToString("X2") + itemHi.ToString("X2");
-            tClient.Send(Buf1);//一括データ読み出しコマンド送信
-            DebugText(Buf1);
         }
 
         /// <summary>
@@ -569,7 +405,7 @@ namespace PLCDataBackUp
                     while (Dataend);
                 }
             }
-            dataGridView2.DataSource = ReceiveDataMemorys.ToList<ReceiveDataMemory>();
+            //dataGridView2.DataSource = ReceiveDataMemorys.ToList<ReceiveDataMemory>();
         }
       
 
@@ -692,6 +528,7 @@ namespace PLCDataBackUp
 
             }
         }
+
         /// <summary>
         /// 読み出しデータをPLCに一括書き込み
         /// </summary>
@@ -1092,14 +929,14 @@ namespace PLCDataBackUp
     {
         public int  Senddevicecode { get; private set; }
         public long SendStartAddress { get; private set; }
-        public long SendReadLen { get; private set; }
+        public long SendReadLength { get; private set; }
 
         public SendData() { }
-        public SendData(int senddevicecode, long sendStartAddress, long sendReadLen)
+        public SendData(int senddevicecode, long sendStartAddress, long sendReadLength)
         {
             Senddevicecode   = senddevicecode;
             SendStartAddress = sendStartAddress;
-            SendReadLen      = sendReadLen;
+            SendReadLength      = sendReadLength;
         }
     }
 
