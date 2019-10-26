@@ -54,7 +54,6 @@
             this.ReadBtn = new System.Windows.Forms.Button();
             this.textBox10 = new System.Windows.Forms.TextBox();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
-            this.SaveBtn = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
@@ -290,16 +289,6 @@
             this.dataGridView2.Size = new System.Drawing.Size(270, 329);
             this.dataGridView2.TabIndex = 38;
             // 
-            // SaveBtn
-            // 
-            this.SaveBtn.Location = new System.Drawing.Point(26, 309);
-            this.SaveBtn.Name = "SaveBtn";
-            this.SaveBtn.Size = new System.Drawing.Size(134, 23);
-            this.SaveBtn.TabIndex = 39;
-            this.SaveBtn.Text = "連続データファイルの保存";
-            this.SaveBtn.UseVisualStyleBackColor = true;
-            this.SaveBtn.Click += new System.EventHandler(this.button6_Click);
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -335,7 +324,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(26, 445);
+            this.button3.Location = new System.Drawing.Point(26, 402);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(134, 23);
             this.button3.TabIndex = 45;
@@ -357,7 +346,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(26, 403);
+            this.button4.Location = new System.Drawing.Point(26, 445);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(134, 23);
             this.button4.TabIndex = 47;
@@ -394,7 +383,6 @@
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.SaveBtn);
             this.Controls.Add(this.dataGridView2);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.textBox10);
@@ -457,7 +445,6 @@
         private System.Windows.Forms.Button ReadBtn;
         private System.Windows.Forms.TextBox textBox10;
         private System.Windows.Forms.DataGridView dataGridView2;
-        private System.Windows.Forms.Button SaveBtn;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.DataGridView dataGridView1;

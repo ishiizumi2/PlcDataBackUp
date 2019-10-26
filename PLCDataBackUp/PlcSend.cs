@@ -348,11 +348,6 @@ namespace PLCDataBackUp
             return PlcSendBuffer;
         }
 
-        //未使用
-        public override List<string> AddressSet()
-        {
-            return PlcSendBuffer;
-        }
 
         public override List<string> AddressSet(List<(string x, string y)> swaList)
         {
@@ -364,6 +359,12 @@ namespace PLCDataBackUp
                 PlcSendBuffer.Add(Commandcreate(OnewaList.Count(), AddressSetiing(OnewaList)));
                 i++;
             }
+            return PlcSendBuffer;
+        }
+
+        //未使用
+        public override List<string> AddressSet()
+        {
             return PlcSendBuffer;
         }
 

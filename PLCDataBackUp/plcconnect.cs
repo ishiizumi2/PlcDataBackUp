@@ -150,10 +150,28 @@ namespace PLCDataBackUp
                 //Bufferのデータを送信する
                 SendCount = 0;
                 SendCommand = ContinuityRead;//ワード単位の一括読出
-                ReciveDataBufffer.Clear();
-                PlcDataSend();//最初のデータ送信
+                //ReciveDataBufffer.Clear();
+                //PlcDataSend();//最初のデータ送信
+                Timer_Set();
+                timer1.Start();// タイマーを開始
+
             }
         }
+
+        /// <summary>
+        /// ランダム読み出しスタート
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button2_Click(object sender, EventArgs e)
+        {
+            RandomReadAddressData();
+            SendCount = 0;
+            SendCommand = RandomRead;//ランダム読み出しコマンド 
+            Timer_Set();
+            timer1.Start();// タイマーを開始
+        }
+
 
         /// <summary>
         /// 入力されたD,R,Wアドレスが正しいかチェックする
@@ -253,8 +271,9 @@ namespace PLCDataBackUp
                         {
                             ReceiveDataMemorys.Clear();
                             ReceiveDataMemorys = continuityReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
-                            RandomReciveDataSave();
+                            RandomReciveDataSave(1);
                         }
+                        SendCount = 0;
                     }
                     break;
                 case ContinuityWrite:
@@ -289,7 +308,7 @@ namespace PLCDataBackUp
                         {
                             ReceiveDataMemorys.Clear();
                             ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
-                            RandomReciveDataSave();
+                            RandomReciveDataSave(2);
                         }
                         SendCount = 0;
                     }
@@ -345,144 +364,6 @@ namespace PLCDataBackUp
             return Endcode;
         }
        
-
-       /// <summary>
-       /// 要求したデータをlist<>ReceiveDataMemorysに設定
-       /// </summary>
-        private void RequestReceiveDataSet()
-        {
-            string DeviceKind = "";
-            string s = "";
-           
-            foreach (var ReceiveData in ReciveDatas.Select((data, index) => new { data, index }))
-            {
-                SendData senddata = SendDatas.ElementAtOrDefault(ReceiveData.index);
-                if (senddata != null)
-                {
-                    int Datacount = 0;
-                    Boolean Dataend = true;
-                    do
-                    {
-                        try
-                        {
-                            if (ReceiveData.data.Length > Datacount * 4)
-                            {
-                                string Rdata = ReceiveData.data.Substring(Datacount * 4, 4);
-                                if (!string.IsNullOrEmpty(Rdata))
-                                {
-
-                                    switch (senddata.Senddevicecode)
-                                    {
-                                        case 0xA8:
-                                            DeviceKind = "D";
-                                            s = DeviceKind + (senddata.SendStartAddress + Datacount).ToString();
-                                            break;
-                                        case 0xAF:
-                                            DeviceKind = "R";
-                                            s = DeviceKind + (senddata.SendStartAddress + Datacount).ToString();
-                                            break;
-                                        case 0xB4:
-                                            DeviceKind = "W";
-                                            s = DeviceKind + (senddata.SendStartAddress + Datacount).ToString("X"); //16進数文字に変換
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                    int d = Convert.ToInt32((Rdata.Substring(2, 2) + Rdata.Substring(0, 2)), 16);
-                                    ReceiveDataMemorys.Add(new ReceiveDataMemory(s, d));
-                                }
-                                Datacount++;
-                            }else
-                            {
-                                Dataend = false;
-                            }
-                        }
-                        catch
-                        {
-                            Dataend = false;
-                        }
-                    }
-                    while (Dataend);
-                }
-            }
-            //dataGridView2.DataSource = ReceiveDataMemorys.ToList<ReceiveDataMemory>();
-        }
-      
-
-       
-        /// <summary>
-        /// データのファイルへの保存
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button6_Click(object sender, EventArgs e)
-        {
-            //SaveFileDialogクラスのインスタンスを作成
-            SaveFileDialog sfd = new SaveFileDialog();
-            DateTime dt = DateTime.Now;
-            string dt1 = dt.ToString("yyyy-MM-dd_HH-mm-ss");
-            //はじめのファイル名を指定する
-            sfd.FileName = "PLCDATA"+dt1+".csv";
-
-            //はじめに表示されるフォルダを指定する
-            sfd.InitialDirectory = @"C:\";
-            //[ファイルの種類]に表示される選択肢を指定する
-            sfd.Filter =
-                "CSVファイル(*.csvl;*.csv)|*.csvl;*.csv|すべてのファイル(*.*)|*.*";
-            //[ファイルの種類]ではじめに
-            //「すべてのファイル」が選択されているようにする
-            sfd.FilterIndex = 2;
-            //タイトルを設定する
-            sfd.Title = "保存先のファイルを選択してください";
-            //ダイアログボックスを閉じる前に現在のディレクトリを復元するようにする
-            sfd.RestoreDirectory = true;
-            //既に存在するファイル名を指定したとき警告する
-            //デフォルトでTrueなので指定する必要はない
-            sfd.OverwritePrompt = true;
-            //存在しないパスが指定されたとき警告を表示する
-            //デフォルトでTrueなので指定する必要はない
-            sfd.CheckPathExists = true;
-
-            //ダイアログを表示する
-            if (sfd.ShowDialog() == DialogResult.OK)
-            {
-                //OKボタンがクリックされたとき
-                //選択されたファイル名を表示する
-                //Console.WriteLine(sfd.FileName);
-                // 保存用のファイルを開く
-                using (StreamWriter writer = new StreamWriter(@sfd.FileName, false, Encoding.GetEncoding("shift_jis")))
-                {
-                    writer.WriteLine(dt1);
-                    int rowCount = dataGridView2.Rows.Count;
-
-                    // ユーザによる行追加が許可されている場合は、最後に新規入力用の
-                    // 1行分を差し引く
-                    if (dataGridView2.AllowUserToAddRows == true)
-                    {
-                        rowCount = rowCount - 1;
-                    }
-
-                    // 行
-                    for (int i = 0; i < rowCount; i++)
-                    {
-                        // リストの初期化
-                        List<String> strList = new List<String>();
-
-                        // 列
-                        for (int j = 0; j < dataGridView2.Columns.Count; j++)
-                        {
-                            strList.Add(dataGridView2[j, i].Value.ToString());
-                        }
-                        String[] strArray = strList.ToArray();  // 配列へ変換
-
-                        // CSV 形式に変換
-                        String strCsvData = String.Join(",", strArray);//文字列の配列を連結する
-
-                        writer.WriteLine(strCsvData);
-                    }
-                }
-            }
-        }
 
         /// <summary>
         /// 送信データ,受信データの保存 Debug
@@ -766,28 +647,22 @@ namespace PLCDataBackUp
             PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
             
         }
-    
-
-        /// <summary>
-        /// ランダム読み出しスタート
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button2_Click(object sender, EventArgs e)
-        {
-            RandomReadAddressData();
-            SendCount = 0;
-            SendCommand = RandomRead;//ランダム読み出しコマンド 
-            Timer_Set();
-            timer1.Start();// タイマーを開始
-        }
 
         /// <summary>
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
-        private void RandomReciveDataSave()
+        /// <param name="type">dataの種類　1:連続　2:ﾗﾝﾀﾞﾑ</param>
+        private void RandomReciveDataSave(int type)
         {
-            string cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\" + StartTime + ".csv";
+            string cDir="";
+            if (type == 1)
+            {
+                cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\連続データ\" + StartTime + ".csv";
+            }
+            else
+            {
+                cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\ランダムデータ\" + StartTime + ".csv";
+            }
             DateTime now = DateTime.Now;
             string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
 
@@ -799,7 +674,8 @@ namespace PLCDataBackUp
             System.IO.StreamWriter sw = new System.IO.StreamWriter(
                 @cDir,
                 true,
-                System.Text.Encoding.GetEncoding("shift_jis"));
+                sjisEnc);
+                //System.Text.Encoding.GetEncoding("shift_jis"));
             sw.WriteLine(str);
             //閉じる
             sw.Close();
