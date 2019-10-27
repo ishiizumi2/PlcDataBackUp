@@ -11,7 +11,7 @@ namespace PLCDataBackUp
 
     public partial class plcconnect : Form
     {
-        const long MaxLength = (long)480;//960;
+        const long MaxLength = (long)480;
         const int RandomReadMax = 192;//ランダム読み出し最大
         const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
         const int ArrayCount = 68; //32767/MaxLingthの数
@@ -28,6 +28,7 @@ namespace PLCDataBackUp
         RandomReadPlcSend randomReadPlcSend = new RandomReadPlcSend();
         RandomWritePlcSend randomWritePlcSend = new RandomWritePlcSend();
         ContinuityReadPlcSend continuityReadPlcSend = new ContinuityReadPlcSend();
+        ContinuityWritePlcSend continuityWritePlcSend = new ContinuityWritePlcSend();
         long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
         int SendCount = 0; //送信データカウント
         string StartTime;
@@ -138,7 +139,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// PLCからのデータ一括読み込み・送信
+        /// PLCからのデータ一括読み込みスタート
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -147,14 +148,10 @@ namespace PLCDataBackUp
             if (AdressCheck())
             {
                 PlcSendBuffer = continuityReadPlcSend.AddressSet();
-                //Bufferのデータを送信する
                 SendCount = 0;
                 SendCommand = ContinuityRead;//ワード単位の一括読出
-                //ReciveDataBufffer.Clear();
-                //PlcDataSend();//最初のデータ送信
                 Timer_Set();
                 timer1.Start();// タイマーを開始
-
             }
         }
 
@@ -277,12 +274,13 @@ namespace PLCDataBackUp
                     }
                     break;
                 case ContinuityWrite:
-                    if (SendCount < WriteSendDatas.Count)
+                    if (SendCount < PlcSendBuffer.Count)
                     {
-                        WriteSendData SData = WriteSendDatas.ElementAtOrDefault(SendCount);
+                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
                         if (SData != null)
                         {
-                            WriteDataSend(SData.Senddevicecode, SData.SendStartAddress, SData.SendReadLen, SData.SendDataStr);
+                            tClient.Send(SData);//ランダム書き込みコマンド送信
+                            DebugText(SData);
                             SendCount++;
                         }
                     }
@@ -393,20 +391,21 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void button3_Click(object sender, EventArgs e)
         {
-            string FileName = randomWritePlcSend.FileSelect();
+            RowCount = 0;
+            SendCommand = ContinuityWrite;//ワード単位の一括書き込みコマンド 
+            string FileName = continuityWritePlcSend.FileSelect();
             if (!string.IsNullOrWhiteSpace(FileName))
             {
-                //前に表示されているデータを消去
-                ReceiveDataMemorys.Clear();
-
-                //OKボタンがクリックされたとき
-                //選択されたファイル名を読み込んで表示する
-                foreach (var sdata in File.ReadLines(FileName, Encoding.GetEncoding("Shift_JIS")).Skip(1).Select(line => line.Split(',')))
-                {
-                    ReceiveDataMemorys.Add(new ReceiveDataMemory(sdata[0], int.Parse(sdata[1])));
-                }
-                dataGridView2.DataSource = ReceiveDataMemorys.ToList<ReceiveDataMemory>();
-
+                lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
+                Timer_Set();
+                timer2.Start(); // タイマーを開始
+            }
+            else
+            {
+                MessageBox.Show("ファイルが選択されていません",
+                "エラー",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
             }
         }
 
@@ -432,7 +431,7 @@ namespace PLCDataBackUp
         /// </summary>
         private Boolean WriteDataSet()
         {
-            string[] Addres = new string[6];
+            //string[] Addres = new string[6];
             ReceiveDataMemory[] RData = new ReceiveDataMemory[6];
             int devicecode = 0;
            
@@ -505,11 +504,11 @@ namespace PLCDataBackUp
         /// <param name="ReadLen"></param>読み出しワード数
         private void WriteDataSend(int devicecode, long StartAddress, long WriteLen, string Wdata)
         {
-            
+
             //                                要求データ長 CPU監視タイマ  コマンド サブコマンド 先頭アドレス  デバイスコード  デバイス点数  デバイス点数分のデータ
             //string Buf1 = "500000FFFF0300　0E00　       1000           0114     0000         660000        A8              0100          9519";//D100 K6549を書き込み
             //string Buf2 = "500000FFFF03000E00100001140000660000A801009519";//D100 K6549を書き込み
-           
+                             
 
             int len = (int)WriteLen*2 + 12;
             int lenLo = len & 0xff;
@@ -530,10 +529,10 @@ namespace PLCDataBackUp
         /// <summary>
         /// 書き込み点数分のデータ設定
         /// </summary>
-        /// <param name="devicecode"></param>デバイスコード D,R,W
+        /// <param name="devicecode">デバイスコード D,R,W</param>
         /// <param name="Count"></param>
-        /// <param name="WriteLen"></param>デバイス点数
-        /// <param name="str"></param>書き込み点数分のデータ　参照渡しで返す
+        /// <param name="WriteLen">デバイス点数</param>
+        /// <param name="str">書き込み点数分のデータ　参照渡しで返す</param>
         private void WriteDataSetting(int devicecode, int Count,long WriteLen,out string str)
         {
             int sdat ,Lo, Hi;
@@ -563,7 +562,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// 一括書き込みデータの応答の確認
+        /// 書き込みデータの応答の確認
         /// </summary>
         private void WriteReciveDataCheck()
         {
@@ -682,7 +681,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダム読み出し用タイマー
+        /// 読み出しコマンド用タイマー
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -748,7 +747,16 @@ namespace PLCDataBackUp
                     var result1 = blist.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
 
                     var swaList = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
-                    PlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
+                    switch(SendCommand)
+                    {
+                        case ContinuityWrite:
+                            PlcSendBuffer = continuityWritePlcSend.AddressSet(swaList);
+                            break;
+                        case RandomWrite:
+                            PlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
+                            break;
+                    }
+                    
                     PlcDataSend();
                     RowCount++;
                 }
@@ -794,9 +802,7 @@ namespace PLCDataBackUp
                 timer2.Interval = 1000;
             }
         }
-
-        
-     }
+    }
 
     /// <summary>
     /// 読み込みデータ送信用list用のクラス
@@ -812,7 +818,7 @@ namespace PLCDataBackUp
         {
             Senddevicecode   = senddevicecode;
             SendStartAddress = sendStartAddress;
-            SendReadLength      = sendReadLength;
+            SendReadLength   = sendReadLength;
         }
     }
 
