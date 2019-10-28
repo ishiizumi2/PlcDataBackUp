@@ -49,16 +49,15 @@
             this.EndAdd3 = new System.Windows.Forms.TextBox();
             this.StartAdd3 = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
-            this.LoadBtn = new System.Windows.Forms.Button();
-            this.WriteBtn = new System.Windows.Forms.Button();
-            this.ReadBtn = new System.Windows.Forms.Button();
+            this.ContinuityRead_Btn = new System.Windows.Forms.Button();
+            this.ContinuityWrite_Btn = new System.Windows.Forms.Button();
             this.textBox10 = new System.Windows.Forms.TextBox();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.label1 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
+            this.RandomRead_Btn = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.button3 = new System.Windows.Forms.Button();
+            this.RandomWrite_Btn = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.timer2 = new System.Windows.Forms.Timer(this.components);
             this.button4 = new System.Windows.Forms.Button();
@@ -241,35 +240,25 @@
             this.label13.TabIndex = 21;
             this.label13.Text = "W Addres";
             // 
-            // LoadBtn
+            // ContinuityRead_Btn
             // 
-            this.LoadBtn.Location = new System.Drawing.Point(26, 184);
-            this.LoadBtn.Name = "LoadBtn";
-            this.LoadBtn.Size = new System.Drawing.Size(134, 23);
-            this.LoadBtn.TabIndex = 26;
-            this.LoadBtn.Text = "連続データの読込";
-            this.LoadBtn.UseVisualStyleBackColor = true;
-            this.LoadBtn.Click += new System.EventHandler(this.button1_Click);
+            this.ContinuityRead_Btn.Location = new System.Drawing.Point(26, 184);
+            this.ContinuityRead_Btn.Name = "ContinuityRead_Btn";
+            this.ContinuityRead_Btn.Size = new System.Drawing.Size(134, 23);
+            this.ContinuityRead_Btn.TabIndex = 26;
+            this.ContinuityRead_Btn.Text = "連続データの読込";
+            this.ContinuityRead_Btn.UseVisualStyleBackColor = true;
+            this.ContinuityRead_Btn.Click += new System.EventHandler(this.ContinuityRead_Btn_Click);
             // 
-            // WriteBtn
+            // ContinuityWrite_Btn
             // 
-            this.WriteBtn.Location = new System.Drawing.Point(26, 223);
-            this.WriteBtn.Name = "WriteBtn";
-            this.WriteBtn.Size = new System.Drawing.Size(134, 23);
-            this.WriteBtn.TabIndex = 27;
-            this.WriteBtn.Text = "連続データの書込";
-            this.WriteBtn.UseVisualStyleBackColor = true;
-            this.WriteBtn.Click += new System.EventHandler(this.Write_Click);
-            // 
-            // ReadBtn
-            // 
-            this.ReadBtn.Location = new System.Drawing.Point(26, 266);
-            this.ReadBtn.Name = "ReadBtn";
-            this.ReadBtn.Size = new System.Drawing.Size(134, 23);
-            this.ReadBtn.TabIndex = 28;
-            this.ReadBtn.Text = "連続データファイルの読出";
-            this.ReadBtn.UseVisualStyleBackColor = true;
-            this.ReadBtn.Click += new System.EventHandler(this.button3_Click);
+            this.ContinuityWrite_Btn.Location = new System.Drawing.Point(26, 225);
+            this.ContinuityWrite_Btn.Name = "ContinuityWrite_Btn";
+            this.ContinuityWrite_Btn.Size = new System.Drawing.Size(134, 23);
+            this.ContinuityWrite_Btn.TabIndex = 28;
+            this.ContinuityWrite_Btn.Text = "連続データの書き込み";
+            this.ContinuityWrite_Btn.UseVisualStyleBackColor = true;
+            this.ContinuityWrite_Btn.Click += new System.EventHandler(this.ContinuityWrite_Btn_Click);
             // 
             // textBox10
             // 
@@ -298,15 +287,16 @@
             this.label1.TabIndex = 40;
             this.label1.Text = "通信状態";
             // 
-            // button2
+            // RandomRead_Btn
             // 
-            this.button2.Location = new System.Drawing.Point(26, 360);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(134, 23);
-            this.button2.TabIndex = 43;
-            this.button2.Text = "ランダム読み出し";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.RandomRead_Btn.Cursor = System.Windows.Forms.Cursors.PanSE;
+            this.RandomRead_Btn.Location = new System.Drawing.Point(26, 279);
+            this.RandomRead_Btn.Name = "RandomRead_Btn";
+            this.RandomRead_Btn.Size = new System.Drawing.Size(134, 23);
+            this.RandomRead_Btn.TabIndex = 43;
+            this.RandomRead_Btn.Text = "ランダム読み出し";
+            this.RandomRead_Btn.UseVisualStyleBackColor = true;
+            this.RandomRead_Btn.Click += new System.EventHandler(this.RandomRead_Btn_Click);
             // 
             // dataGridView1
             // 
@@ -322,15 +312,15 @@
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // button3
+            // RandomWrite_Btn
             // 
-            this.button3.Location = new System.Drawing.Point(26, 402);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(134, 23);
-            this.button3.TabIndex = 45;
-            this.button3.Text = "ランダム書き込み";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click_1);
+            this.RandomWrite_Btn.Location = new System.Drawing.Point(26, 327);
+            this.RandomWrite_Btn.Name = "RandomWrite_Btn";
+            this.RandomWrite_Btn.Size = new System.Drawing.Size(134, 23);
+            this.RandomWrite_Btn.TabIndex = 45;
+            this.RandomWrite_Btn.Text = "ランダム書き込み";
+            this.RandomWrite_Btn.UseVisualStyleBackColor = true;
+            this.RandomWrite_Btn.Click += new System.EventHandler(this.RandomWrite_Btn_Click);
             // 
             // textBox1
             // 
@@ -346,7 +336,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(26, 445);
+            this.button4.Location = new System.Drawing.Point(26, 380);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(134, 23);
             this.button4.TabIndex = 47;
@@ -380,15 +370,14 @@
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.button3);
-            this.Controls.Add(this.button2);
+            this.Controls.Add(this.RandomWrite_Btn);
+            this.Controls.Add(this.RandomRead_Btn);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dataGridView2);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.textBox10);
-            this.Controls.Add(this.ReadBtn);
-            this.Controls.Add(this.WriteBtn);
-            this.Controls.Add(this.LoadBtn);
+            this.Controls.Add(this.ContinuityWrite_Btn);
+            this.Controls.Add(this.ContinuityRead_Btn);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.EndAdd3);
@@ -440,16 +429,15 @@
         private System.Windows.Forms.TextBox EndAdd3;
         private System.Windows.Forms.TextBox StartAdd3;
         private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.Button LoadBtn;
-        private System.Windows.Forms.Button WriteBtn;
-        private System.Windows.Forms.Button ReadBtn;
+        private System.Windows.Forms.Button ContinuityRead_Btn;
+        private System.Windows.Forms.Button ContinuityWrite_Btn;
         private System.Windows.Forms.TextBox textBox10;
         private System.Windows.Forms.DataGridView dataGridView2;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button RandomRead_Btn;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Timer timer1;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button RandomWrite_Btn;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Timer timer2;
         private System.Windows.Forms.Button button4;

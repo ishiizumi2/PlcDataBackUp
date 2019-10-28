@@ -26,9 +26,9 @@ namespace PLCDataBackUp
         protected string Sdata;
         protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
         protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用List
-       
+        protected int[] Device = { 0xA8, 0xAF, 0xB4 };//D,R,W
 
-        internal string StartTime { get; set; }
+    internal string StartTime { get; set; }
 
         private protected abstract string Commandcreate(int count,string senddata);
 
@@ -129,7 +129,6 @@ namespace PLCDataBackUp
                     devicecode = "";
                     break;
             }
-
             return devicecode;
         }
     }
@@ -167,10 +166,9 @@ namespace PLCDataBackUp
             string DeviceKind = "D";
             List<string> addressList = new List<string>();
             List<int> dataList = new List<int>();
-
-            foreach (var RRdata in ReciveDatas.Select((data, index) => new { data, index }))
+            foreach (var (data, index) in ReciveDatas.Select((data, index) => (data, index)))
             {
-                string senddata = PlcSendBuffer.ElementAtOrDefault(RRdata.index); 
+                string senddata = PlcSendBuffer.ElementAtOrDefault(index); 
                 if (senddata != null)
                 {
                     //DアドレスのList<string>を作成する
@@ -191,9 +189,9 @@ namespace PLCDataBackUp
                     {
                         try
                         {
-                            if (RRdata.data.Length > rdatacount * 4)
+                            if (data.Length > rdatacount * 4)
                             {
-                                string Rdata = RRdata.data.Substring(rdatacount * 4, 4);
+                                string Rdata = data.Substring(rdatacount * 4, 4);
                               
                                 if (!string.IsNullOrEmpty(Rdata))
                                 {
@@ -428,8 +426,8 @@ namespace PLCDataBackUp
         List<SendData> SendDatas = new List<SendData>();
 
 
-        private long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
-      
+         long[,,] ReadOutAddress = new long[3, ArrayCount, 2]; //アドレス 0:D 1:R 2:W　,データのカウント,0:開始アドレス 1:読み出しワード数
+
         private long[] Svalues = new long[3];
         private long[] Evalues = new long[3];
 
@@ -560,28 +558,14 @@ namespace PLCDataBackUp
         {
             int devicecode = 0;
             ReadOutStartAddressSet();
-            for (long devicecnt = 0; devicecnt < 3; devicecnt++)
+            foreach (var (device, index) in Device.Select((device, index) => (device, index)))
             {
-                switch (devicecnt)
-                {
-                    case 0:
-                        devicecode = 0xA8;
-                        break;
-                    case 1:
-                        devicecode = 0xAF;
-                        break;
-                    case 2:
-                        devicecode = 0xB4;
-                        break;
-                    default:
-                        break;
-                }
-
+                devicecode = device;
                 for (int i = 0; i < ArrayCount; i++)
                 {
-                    if (ReadOutAddress[devicecnt, i, 0] != (long)-1)
+                    if (ReadOutAddress[index, i, 0] != (long)-1)
                     {
-                        SendDatas.Add(new SendData(devicecode, ReadOutAddress[devicecnt, i, 0], ReadOutAddress[devicecnt, i, 1]));//Buferに送信データを代入
+                        SendDatas.Add(new SendData(devicecode, ReadOutAddress[index, i, 0], ReadOutAddress[index, i, 1]));//Buferに送信データを代入
                     }
                     else
                         break;
@@ -621,9 +605,6 @@ namespace PLCDataBackUp
                     else
                     {
                         ReadOutAddress[i, j, 1] = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
-                        
-                        long bb = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
-
                         break;
                     }
                 }
@@ -665,8 +646,6 @@ namespace PLCDataBackUp
             return senddata;
         }
     } 
-
-
 
     /// <summary>
     /// 一括書き込みデータ設定用
@@ -719,7 +698,6 @@ namespace PLCDataBackUp
             return PlcSendBuffer;
         }
 
-
         internal override List<string> AddressSet(List<(string x, string y)> swaList)
         {
            
@@ -744,7 +722,7 @@ namespace PLCDataBackUp
                         break;
                 }
 
-                var query = swaList.Where(c => c.x.StartsWith(code)).ToList();
+                var query = swaList.Where(c => c.x.StartsWith(code)).ToList();//該当するdeviceのみ抜き出す
                 int count = 0;
                 while (count * RandomWriteMax < query.Count())
                 {
@@ -753,7 +731,6 @@ namespace PLCDataBackUp
                     count++;
                 }
             }
-         
             return PlcSendBuffer;
         }
 
@@ -799,18 +776,12 @@ namespace PLCDataBackUp
                 int dataLo = data & 0xff;
                 int dataHi = data >> 8;
 
-
                 //アドレスの指定　P156 先頭アドレス  デバイスコード  デバイス点数  デバイス点数分のデータ
                 //                      L -  H       D
                 //                      000000       A8
                 senddata = senddata +  dataLo.ToString("X2") + dataHi.ToString("X2");
             }
-
-
             return senddata;
-
-
-
         }
 
         //未使用
@@ -821,5 +792,22 @@ namespace PLCDataBackUp
         }
     }
 
+    /// <summary>
+    /// 読み込みデータ送信用list用のクラス
+    /// </summary>
+    class SendData
+    {
+        public int Senddevicecode { get; private set; }
+        public long SendStartAddress { get; private set; }
+        public long SendReadLength { get; private set; }
+
+        public SendData() { }
+        public SendData(int senddevicecode, long sendStartAddress, long sendReadLength)
+        {
+            Senddevicecode = senddevicecode;
+            SendStartAddress = sendStartAddress;
+            SendReadLength = sendReadLength;
+        }
+    }
 }
 

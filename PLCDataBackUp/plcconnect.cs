@@ -29,27 +29,17 @@ namespace PLCDataBackUp
         RandomWritePlcSend randomWritePlcSend = new RandomWritePlcSend();
         ContinuityReadPlcSend continuityReadPlcSend = new ContinuityReadPlcSend();
         ContinuityWritePlcSend continuityWritePlcSend = new ContinuityWritePlcSend();
-        long[,,] ReadOutAddress = new long[3, ArrayCount, 2];
         int SendCount = 0; //送信データカウント
         string StartTime;
         string SendCommand = "";
         Encoding sjisEnc = Encoding.GetEncoding("Shift_JIS");
         string[] lines;
-        int RowCount = 0; //ランダム書き込み用の配列のカウント
-       
+        int RowCount = 0; //書き込み用の配列のカウント
 
-        enum Device
-        {
-            D,R,W
-        }
-        List<SendData> SendDatas = new List<SendData>();
-        List<WriteSendData> WriteSendDatas = new List<WriteSendData>();
-        List<string> ReciveDataBufffer = new List<string>(); 
+        List<string> ReciveDataBufffer = new List<string>(); //受信データ用
         List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
         List<string> ReciveDatas = new List<string>();
         List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
-
-
 
         public plcconnect()
         {
@@ -139,11 +129,11 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// PLCからのデータ一括読み込みスタート
+        /// 連続データ読み出し
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button1_Click(object sender, EventArgs e)
+        private void ContinuityRead_Btn_Click(object sender, EventArgs e)
         {
             if (AdressCheck())
             {
@@ -156,19 +146,71 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダム読み出しスタート
+        /// 連続データ書き込み
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button2_Click(object sender, EventArgs e)
+        private void ContinuityWrite_Btn_Click(object sender, EventArgs e)
         {
-            RandomReadAddressData();
-            SendCount = 0;
-            SendCommand = RandomRead;//ランダム読み出しコマンド 
-            Timer_Set();
-            timer1.Start();// タイマーを開始
+            RowCount = 0;
+            SendCommand = ContinuityWrite;//ワード単位の一括書き込みコマンド 
+            string FileName = continuityWritePlcSend.FileSelect();
+            if (!string.IsNullOrWhiteSpace(FileName))
+            {
+                lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
+                Timer_Set();
+                timer2.Start(); // タイマーを開始
+            }
+            else
+            {
+                MessageBox.Show("ファイルが選択されていません",
+                "エラー",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            }
         }
 
+        /// <summary>
+        /// ランダムデータ読み出し
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RandomRead_Btn_Click(object sender, EventArgs e)
+        {
+            if (RandomReadAddressData())
+            {
+                SendCount = 0;
+                SendCommand = RandomRead;//ランダム読み出しコマンド 
+                Timer_Set();
+                timer1.Start();// タイマーを開始
+            }
+        }
+
+        /// <summary>
+        /// ランダムデータ書き込み
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RandomWrite_Btn_Click(object sender, EventArgs e)
+        {
+            RowCount = 0;
+            SendCommand = RandomWrite;//ランダム書き込みコマンド 
+            string FileName = randomWritePlcSend.FileSelect();
+            if (!string.IsNullOrWhiteSpace(FileName))
+            {
+                lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
+                Timer_Set();
+                timer2.Start(); // タイマーを開始
+            }
+            else
+            {
+                MessageBox.Show("ファイルが選択されていません",
+                "エラー",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            }
+
+        }
 
         /// <summary>
         /// 入力されたD,R,Wアドレスが正しいかチェックする
@@ -181,8 +223,7 @@ namespace PLCDataBackUp
             for (int i = 0; i < 3; i++)
             {
                 //TextBoxをさがす。子コントロールも検索する。
-                string cname = "StartAdd" + (i + 1).ToString();
-                Control st = this.Controls[cname];
+                Control st = this.Controls["StartAdd" + (i + 1).ToString()];
                 //TextBoxが見つかれば、Textの値を数値変換する
                 if (st != null)
                 {
@@ -233,14 +274,40 @@ namespace PLCDataBackUp
                         return false;
                     }
                 }
-                switch(i)
-                {
-                    case 0:
-
-                        break;
-                }
-
             }
+            return true;
+        }
+
+
+        /// <summary>
+        /// アドレス設定ファイルを読み込む
+        /// ReadAddressSetに作成したrslistを渡す        /// 
+        /// </summary>
+        private Boolean RandomReadAddressData()
+        {
+            List<int> ReadAddressList = new List<int>();
+            string FileName = Directory.GetCurrentDirectory() + @"\WorkData\Config\ReadAddressData.dat";
+
+            try
+            {
+                foreach (var sdata in File.ReadLines(FileName, sjisEnc).Skip(1))//1行目をとばす
+                {
+                    if (int.TryParse(sdata, out int data))
+                    {
+                        ReadAddressList.Add(data);
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("読込用設定ファイルが有りません",
+                "エラー",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+                return false;
+            }
+            var sraList = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
+            PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
             return true;
         }
 
@@ -252,12 +319,13 @@ namespace PLCDataBackUp
             switch (SendCommand)
             {
                 case ContinuityRead:
+                case RandomRead:
                     if (SendCount < PlcSendBuffer.Count)
                     {
                         var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
                         if (SData != null)
                         {
-                            tClient.Send(SData);//ランダム読み出しコマンド送信
+                            tClient.Send(SData);//読み出しコマンド送信
                             DebugText(SData);
                             SendCount++;
                         }
@@ -268,56 +336,19 @@ namespace PLCDataBackUp
                         {
                             ReceiveDataMemorys.Clear();
                             ReceiveDataMemorys = continuityReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
-                            RandomReciveDataSave(1);
+                            RandomReciveDataSave(SendCommand);
                         }
                         SendCount = 0;
                     }
                     break;
                 case ContinuityWrite:
-                    if (SendCount < PlcSendBuffer.Count)
-                    {
-                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
-                        if (SData != null)
-                        {
-                            tClient.Send(SData);//ランダム書き込みコマンド送信
-                            DebugText(SData);
-                            SendCount++;
-                        }
-                    }
-                    else //受信完了
-                    {
-                        WriteReciveDataCheck();
-                    }
-                    break;
-                case RandomRead:
-                    if (SendCount < PlcSendBuffer.Count)
-                    {
-                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
-                        if (SData != null)
-                        {
-                            tClient.Send(SData);//ランダム読み出しコマンド送信
-                            DebugText(SData);
-                            SendCount++;
-                        }
-                    }
-                    else //受信完了
-                    {
-                        if (ReadReceiveDataCheck() == 0)
-                        {
-                            ReceiveDataMemorys.Clear();
-                            ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
-                            RandomReciveDataSave(2);
-                        }
-                        SendCount = 0;
-                    }
-                    break;
                 case RandomWrite:
                     if (SendCount < PlcSendBuffer.Count)
                     {
                         var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
                         if (SData != null)
                         {
-                            tClient.Send(SData);//ランダム書き込みコマンド送信
+                            tClient.Send(SData);//書き込みコマンド送信
                             DebugText(SData);
                             SendCount++;
                         }
@@ -361,7 +392,25 @@ namespace PLCDataBackUp
             }
             return Endcode;
         }
-       
+
+        /// <summary>
+        /// 書き込みデータの応答の確認
+        /// </summary>
+        private void WriteReciveDataCheck()
+        {
+            //string DataLength = "0";
+
+            foreach (var ReceiveData in ReciveDataBufffer)
+            {
+                //DataLength = ReceiveData.data.Substring(14, 4);//応答データ長
+                string Endcode = ReceiveData.Substring(18, 4);//終了コード
+                if (int.Parse(Endcode) != 0)
+                {
+                    MessageBox.Show("書き込みデータの応答が異常終了です");
+                }
+            }
+        }
+
 
         /// <summary>
         /// 送信データ,受信データの保存 Debug
@@ -384,200 +433,6 @@ namespace PLCDataBackUp
             sw.Close();
         }
 
-        /// <summary>
-        /// データのファイルからの読み出し
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button3_Click(object sender, EventArgs e)
-        {
-            RowCount = 0;
-            SendCommand = ContinuityWrite;//ワード単位の一括書き込みコマンド 
-            string FileName = continuityWritePlcSend.FileSelect();
-            if (!string.IsNullOrWhiteSpace(FileName))
-            {
-                lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
-                Timer_Set();
-                timer2.Start(); // タイマーを開始
-            }
-            else
-            {
-                MessageBox.Show("ファイルが選択されていません",
-                "エラー",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-            }
-        }
-
-        /// <summary>
-        /// 読み出しデータをPLCに一括書き込み
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Write_Click(object sender, EventArgs e)
-        {
-            if (WriteDataSet())
-            {
-                //Bufferのデータを送信する
-                SendCount = 0;
-                SendCommand = ContinuityWrite;//ワード単位の一括書き込み
-                ReciveDataBufffer.Clear();
-                PlcDataSend();
-            }  
-        }
-
-        /// <summary>
-        /// 読み出したデータをPLCに書き込みする為のデータをセット 
-        /// </summary>
-        private Boolean WriteDataSet()
-        {
-            //string[] Addres = new string[6];
-            ReceiveDataMemory[] RData = new ReceiveDataMemory[6];
-            int devicecode = 0;
-           
-            if (ReceiveDataMemorys.Count != 0)
-            {
-                RData[0] = ReceiveDataMemorys.FirstOrDefault(c => c.ReceiveAddress.StartsWith("D"));
-                RData[1] = ReceiveDataMemorys.LastOrDefault(c => c.ReceiveAddress.StartsWith("D"));
-                RData[2] = ReceiveDataMemorys.FirstOrDefault(c => c.ReceiveAddress.StartsWith("R"));
-                RData[3] = ReceiveDataMemorys.LastOrDefault(c => c.ReceiveAddress.StartsWith("R"));
-                RData[4] = ReceiveDataMemorys.FirstOrDefault(c => c.ReceiveAddress.StartsWith("W"));
-                RData[5] = ReceiveDataMemorys.LastOrDefault(c => c.ReceiveAddress.StartsWith("W"));
-            }
-            else
-            {
-                MessageBox.Show("データが空です");
-                return(false);
-            }
-            SendDatas.Clear();
-            for (int i = 0; i < 3; i++)
-            {
-                long StartAddres = long.Parse(RData[i * 2].ReceiveAddress.Substring(1));
-                long EndAddress = long.Parse(RData[i * 2 + 1].ReceiveAddress.Substring(1));
-
-                switch (i)
-                {
-                    case (int)Device.D:
-                        devicecode = 0xA8;
-                        break;
-                    case (int)Device.R:
-                        devicecode = 0xAF;
-                        break;
-                    case (int)Device.W:
-                        devicecode = 0xB4;
-                        break;
-                    default:
-                        break;
-                }
-
-                int Datacount = 0;
-                Boolean Dataend = true;
-                do
-                {
-                    string str;
-                    if ((EndAddress+1) - (StartAddres + MaxLength * Datacount) > (long)MaxLength)
-                    {
-                        WriteDataSetting(devicecode, Datacount, (long)MaxLength, out str);
-                        WriteSendDatas.Add(new WriteSendData(devicecode, StartAddres + MaxLength * Datacount, (long)MaxLength, str));//Buferに送信データを代入
-                    }
-                    else
-                    {
-                        long Len = (EndAddress+1) - (StartAddres + MaxLength * Datacount);
-                        WriteDataSetting(devicecode, Datacount, Len, out str);
-                        WriteSendDatas.Add(new WriteSendData(devicecode, StartAddres + MaxLength * Datacount, Len, str));//Buferに送信データを代入
-                        Dataend = false;
-                    }
-                    Datacount++;
-                } while (Dataend);
-            }
-
-            //dataGridView1.DataSource = WriteSendDatas.ToList<WriteSendData>();
-           
-            return (true);
-        }
-
-        /// <summary>
-        /// PLCに一括書込コマンドを送信する関数
-        /// </summary>
-        /// <param name="devicecode"></param>デバイスコード D,R,W
-        /// <param name="StartAddress"></param>先頭アドレス
-        /// <param name="ReadLen"></param>読み出しワード数
-        private void WriteDataSend(int devicecode, long StartAddress, long WriteLen, string Wdata)
-        {
-
-            //                                要求データ長 CPU監視タイマ  コマンド サブコマンド 先頭アドレス  デバイスコード  デバイス点数  デバイス点数分のデータ
-            //string Buf1 = "500000FFFF0300　0E00　       1000           0114     0000         660000        A8              0100          9519";//D100 K6549を書き込み
-            //string Buf2 = "500000FFFF03000E00100001140000660000A801009519";//D100 K6549を書き込み
-                             
-
-            int len = (int)WriteLen*2 + 12;
-            int lenLo = len & 0xff;
-            int lenHi = len >> 8;
-            int addLo = (int)StartAddress & 0xff;
-            int addHi = (int)StartAddress >> 8;
-            int itemLo = (int)WriteLen & 0xff;
-            int itemHi = (int)WriteLen >> 8;
-            string dc = devicecode.ToString("X2");
-            string Buf1 = "500000FFFF0300";
-            Buf1 = Buf1 + lenLo.ToString("X2") + lenHi.ToString("X2") + "100001140000" + addLo.ToString("X2") + addHi.ToString("X2") + "00" + dc + itemLo.ToString("X2") + itemHi.ToString("X2") + Wdata;
-            //string Buf2 = "500000FFFF03000E00100001140000640000A801009519";//D100 K6549を書き込み
-                             
-            tClient.Send(Buf1);//一括書込コマンド送信
-            DebugText(Buf1);
-        }
-
-        /// <summary>
-        /// 書き込み点数分のデータ設定
-        /// </summary>
-        /// <param name="devicecode">デバイスコード D,R,W</param>
-        /// <param name="Count"></param>
-        /// <param name="WriteLen">デバイス点数</param>
-        /// <param name="str">書き込み点数分のデータ　参照渡しで返す</param>
-        private void WriteDataSetting(int devicecode, int Count,long WriteLen,out string str)
-        {
-            int sdat ,Lo, Hi;
-            str = "";
-            string Dcode = "";
-            switch (devicecode)
-            {
-                case 0xA8:
-                    Dcode = "D";
-                    break;
-                case 0xAF:
-                    Dcode = "R";
-                    break;
-                case 0xB4:
-                    Dcode ="W";
-                    break;
-                default:
-                    break;
-            }
-            foreach (var data in ReceiveDataMemorys.Where(c => c.ReceiveAddress.StartsWith(Dcode)).Skip((int)MaxLength * Count).Take((int)WriteLen))
-            {
-                 sdat = data.ReceiveDataSet;
-                 Lo = sdat & 0xff;
-                 Hi = sdat >> 8;
-                 str = str + Lo.ToString("X2") + Hi.ToString("X2");
-            }
-        }
-
-        /// <summary>
-        /// 書き込みデータの応答の確認
-        /// </summary>
-        private void WriteReciveDataCheck()
-        {
-            //string DataLength = "0";
-
-            foreach (var ReceiveData in ReciveDataBufffer)
-            {
-                //DataLength = ReceiveData.data.Substring(14, 4);//応答データ長
-                string Endcode = ReceiveData.Substring(18, 4);//終了コード
-                if (int.Parse(Endcode) != 0)
-                {
-                    MessageBox.Show("書き込みデータの応答が異常終了です"); 
-                }
-            }
-        }
 
         /// <summary>
         /// テスト用
@@ -616,45 +471,15 @@ namespace PLCDataBackUp
             ReadReceiveDataCheck();
         }
 
-        /// <summary>
-        /// アドレス設定ファイルを読み込む
-        /// ReadAddressSetに作成したrslistを渡す        /// 
-        /// </summary>
-        private void RandomReadAddressData()
-        {
-            List<int> ReadAddressList = new List<int>();
-            string FileName = Directory.GetCurrentDirectory() + @"\WorkData\Config\ReadAddressData.dat";
-           
-            try { 
-               foreach (var sdata in File.ReadLines(FileName, sjisEnc).Skip(1))//1行目をとばす
-               {
-                    if (int.TryParse(sdata, out int data))
-                    {
-                        ReadAddressList.Add(data);
-                    }
-               }
-            }
-            catch
-            {
-                MessageBox.Show("読込用設定ファイルが有りません",
-                "エラー",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-                return;
-            }
-            var sraList = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
-            PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
-            
-        }
 
         /// <summary>
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
         /// <param name="type">dataの種類　1:連続　2:ﾗﾝﾀﾞﾑ</param>
-        private void RandomReciveDataSave(int type)
+        private void RandomReciveDataSave(string type)
         {
             string cDir="";
-            if (type == 1)
+            if (type == ContinuityRead)
             {
                 cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\連続データ\" + StartTime + ".csv";
             }
@@ -674,7 +499,6 @@ namespace PLCDataBackUp
                 @cDir,
                 true,
                 sjisEnc);
-                //System.Text.Encoding.GetEncoding("shift_jis"));
             sw.WriteLine(str);
             //閉じる
             sw.Close();
@@ -693,32 +517,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダムデータ書き込みスタート
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button3_Click_1(object sender, EventArgs e)
-        {
-            RowCount = 0;
-            SendCommand = RandomWrite;//ランダム書き込みコマンド 
-            string FileName = randomWritePlcSend.FileSelect();
-            if (!string.IsNullOrWhiteSpace(FileName))
-            {
-                lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
-                Timer_Set();
-                timer2.Start(); // タイマーを開始
-            }
-            else
-            {
-                MessageBox.Show("ファイルが選択されていません",
-                "エラー",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-            }
-        }
-
-        /// <summary>
-        /// ランダム書き込み用のタイマー
+        /// 書き込みコマンド用のタイマー
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -764,7 +563,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// ランダム読み出し通信停止
+        /// 読み出し通信停止
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -801,44 +600,6 @@ namespace PLCDataBackUp
                 timer1.Interval = 1000;
                 timer2.Interval = 1000;
             }
-        }
-    }
-
-    /// <summary>
-    /// 読み込みデータ送信用list用のクラス
-    /// </summary>
-    class SendData
-    {
-        public int  Senddevicecode { get; private set; }
-        public long SendStartAddress { get; private set; }
-        public long SendReadLength { get; private set; }
-
-        public SendData() { }
-        public SendData(int senddevicecode, long sendStartAddress, long sendReadLength)
-        {
-            Senddevicecode   = senddevicecode;
-            SendStartAddress = sendStartAddress;
-            SendReadLength   = sendReadLength;
-        }
-    }
-
-    /// <summary>
-    /// 書き込みデータ送信用list用のクラス
-    /// </summary>
-    class WriteSendData
-    {
-        public int Senddevicecode { get; private set; }
-        public long SendStartAddress { get; private set; }
-        public long SendReadLen { get; private set; }
-        public string SendDataStr { get; private set; }
-
-        public WriteSendData() { }
-        public WriteSendData(int senddevicecode, long sendStartAddress, long sendReadLen,string sendDataStr)
-        {
-            Senddevicecode = senddevicecode;
-            SendStartAddress = sendStartAddress;
-            SendReadLen = sendReadLen;
-            SendDataStr = sendDataStr;
         }
     }
 
