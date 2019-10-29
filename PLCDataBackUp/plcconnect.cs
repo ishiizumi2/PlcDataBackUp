@@ -335,7 +335,15 @@ namespace PLCDataBackUp
                         if (ReadReceiveDataCheck() == 0)
                         {
                             ReceiveDataMemorys.Clear();
-                            ReceiveDataMemorys = continuityReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
+                            switch (SendCommand)
+                            {
+                                case ContinuityRead:
+                                    ReceiveDataMemorys = continuityReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
+                                    break;
+                                case RandomRead:
+                                    ReceiveDataMemorys =randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
+                                    break;
+                            }
                             RandomReciveDataSave(SendCommand);
                         }
                         SendCount = 0;
@@ -378,13 +386,13 @@ namespace PLCDataBackUp
                     string DataLength = ReceiveData.Substring(14, 4);//応答データ長
                     if (Int32.TryParse(ReceiveData.Substring(18, 4), out Endcode))
                     {
-                        if (Endcode == 0)
+                        if (Endcode == 0)//応答OK
                         {
                             string Databuf = ReceiveData.Substring(RDStratPosition);//読み込みデータ
                             int Position = Convert.ToInt32((DataLength.Substring(2, 2) + DataLength.Substring(0, 2)), 16);
                             if ((Databuf.Length) / 2 + 2 == Position)
                             {
-                                ReciveDatas.Add(Databuf);
+                                ReciveDatas.Add(Databuf);//受信したデータを追加している
                             }
                         }
                     }
@@ -479,14 +487,19 @@ namespace PLCDataBackUp
         private void RandomReciveDataSave(string type)
         {
             string cDir="";
-            if (type == ContinuityRead)
+            string directory = "";
+            switch(type)
             {
-                cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\連続データ\" + StartTime + ".csv";
+                case ContinuityRead :
+                    directory = @"\連続データ\";
+                    break;
+                case RandomRead :
+                    directory = @"\ランダムデータ\";
+                    break;
             }
-            else
-            {
-                cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData\ランダムデータ\" + StartTime + ".csv";
-            }
+            cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData"+ directory + StartTime + ".csv";
+
+
             DateTime now = DateTime.Now;
             string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
 
