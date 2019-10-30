@@ -35,6 +35,8 @@ namespace PLCDataBackUp
         Encoding sjisEnc = Encoding.GetEncoding("Shift_JIS");
         string[] lines;
         int RowCount = 0; //書き込み用の配列のカウント
+        DateTime dt1;
+        Boolean elapsedTimeSet;
 
         List<string> ReciveDataBufffer = new List<string>(); //受信データ用
         List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
@@ -312,26 +314,25 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// PLCに送信バッファのデータを1個ずつ送信する
+        /// PLCにPlcSendBufferデータを1個ずつ送信する
         /// </summary>
         private void PlcDataSend()
         {
-            switch (SendCommand)
+            if (SendCount < PlcSendBuffer.Count)//送信中
             {
-                case ContinuityRead:
-                case RandomRead:
-                    if (SendCount < PlcSendBuffer.Count)
-                    {
-                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
-                        if (SData != null)
-                        {
-                            tClient.Send(SData);//読み出しコマンド送信
-                            DebugText(SData);
-                            SendCount++;
-                        }
-                    }
-                    else //受信完了
-                    {
+                var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
+                if (SData != null)
+                {
+                    tClient.Send(SData);//コマンド送信
+                    DebugText(SData);
+                    SendCount++;
+                }
+            }
+            else //受信完了
+            {
+                switch (SendCommand){
+                    case ContinuityRead:
+                    case RandomRead:
                         if (ReadReceiveDataCheck() == 0)
                         {
                             ReceiveDataMemorys.Clear();
@@ -341,33 +342,18 @@ namespace PLCDataBackUp
                                     ReceiveDataMemorys = continuityReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
                                     break;
                                 case RandomRead:
-                                    ReceiveDataMemorys =randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
+                                    ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
                                     break;
                             }
                             RandomReciveDataSave(SendCommand);
                         }
                         SendCount = 0;
-                    }
-                    break;
-                case ContinuityWrite:
-                case RandomWrite:
-                    if (SendCount < PlcSendBuffer.Count)
-                    {
-                        var SData = PlcSendBuffer.ElementAtOrDefault(SendCount);
-                        if (SData != null)
-                        {
-                            tClient.Send(SData);//書き込みコマンド送信
-                            DebugText(SData);
-                            SendCount++;
-                        }
-                    }
-                    else //受信完了
-                    {
+                        break;
+                    case ContinuityWrite:
+                    case RandomWrite:
                         WriteReciveDataCheck();
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                }
             }
         }
 
@@ -406,8 +392,6 @@ namespace PLCDataBackUp
         /// </summary>
         private void WriteReciveDataCheck()
         {
-            //string DataLength = "0";
-
             foreach (var ReceiveData in ReciveDataBufffer)
             {
                 //DataLength = ReceiveData.data.Substring(14, 4);//応答データ長
@@ -527,6 +511,21 @@ namespace PLCDataBackUp
              ReciveDataBufffer.Clear();
              ReciveDatas.Clear();
              PlcDataSend();
+            if (elapsedTimeSet)
+            {  
+                // 現在時を取得
+                DateTime datetime = DateTime.Now;
+                textBox5.Text = datetime.ToLongTimeString();
+                //現在の時間が設定の時間になった時の処理
+                if (datetime >= dt1)
+                {
+                    timer1.Stop();
+                    MessageBox.Show("経過時間が過ぎました",
+                                       "時間",
+                                       MessageBoxButtons.OK,
+                                       MessageBoxIcon.Asterisk);
+                }
+            }
         }
 
         /// <summary>
@@ -612,6 +611,23 @@ namespace PLCDataBackUp
                 textBox2.Text = "1";
                 timer1.Interval = 1000;
                 timer2.Interval = 1000;
+            }
+
+            // 現在時を取得
+            dt1 = DateTime.Now;
+            //時間を設定
+            int elapsedTime = -1;
+            int.TryParse(textBox3.Text, out elapsedTime);
+            if (elapsedTime > 0)
+            {
+                TimeSpan ts1 = new TimeSpan(0, 0, 0, elapsedTime);
+                dt1 += ts1;
+                textBox4.Text = dt1.ToLongTimeString();
+                elapsedTimeSet = true;
+            }
+            else
+            {
+                elapsedTimeSet = false;
             }
         }
     }

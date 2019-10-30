@@ -27,8 +27,9 @@ namespace PLCDataBackUp
         protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
         protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用List
         protected int[] Device = { 0xA8, 0xAF, 0xB4 };//D,R,W
+        protected string[] DevicdCode = { "D", "R", "W" };
 
-    internal string StartTime { get; set; }
+        internal string StartTime { get; set; }
 
         private protected abstract string Commandcreate(int count,string senddata);
 
@@ -275,7 +276,7 @@ namespace PLCDataBackUp
         internal override string AddressSetiing(List<int> OneraList)
         {
             string senddata = "";
-            string DeviceCode = "A8"; //Dアドレス
+            string deviceCode = "A8"; //Dアドレス
             foreach (var sdat in OneraList)
             {
                 int addLo = sdat & 0xff;
@@ -283,7 +284,7 @@ namespace PLCDataBackUp
                 //アドレスの指定　P171 デバイス　デバイスコード
                 //                      L -  H     D
                 //                      000000     A8
-                senddata = senddata + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode;
+                senddata = senddata + addLo.ToString("X2") + addHi.ToString("X2") + "00" +deviceCode;
             }
             return senddata;
         }
@@ -393,7 +394,7 @@ namespace PLCDataBackUp
             {
                 string ad = sdat.x.Substring(0, 1);
                 int address = int.Parse(sdat.x.Replace(ad, ""));
-                string DeviceCode = CodeChange(ad);
+                string deviceCode = CodeChange(ad);
                 int data = int.Parse(sdat.y);
                 int addLo = address & 0xff;
                 int addHi = address >> 8;
@@ -402,7 +403,7 @@ namespace PLCDataBackUp
                 //アドレスの指定　P158 デバイス　デバイスコード  書き込みデータ
                 //                      L -  H     D
                 //                      000000     A8
-                senddata = senddata + addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode + dataLo.ToString("X2") + dataHi.ToString("X2");
+                senddata = senddata + addLo.ToString("X2") + addHi.ToString("X2") + "00" + deviceCode + dataLo.ToString("X2") + dataHi.ToString("X2");
             }
             return senddata;
         }
@@ -422,23 +423,20 @@ namespace PLCDataBackUp
     /// /// </summary>
     class ContinuityReadPlcSend : PlcSend
     {
-
         List<SendData> SendDatas = new List<SendData>();
-
-
-         long[,,] ReadOutAddress = new long[3, ArrayCount, 2]; //アドレス 0:D 1:R 2:W　,データのカウント,0:開始アドレス 1:読み出しワード数
+        long[,,] ReadOutAddress = new long[3, ArrayCount, 2]; //アドレス 0:D 1:R 2:W　,データのカウント,0:開始アドレス 1:読み出しワード数
 
         private long[] Svalues = new long[3];
         private long[] Evalues = new long[3];
 
-        internal long[] PstartAddress
+        internal long[] PstartAddress //D,R,W StartAddress用
         {
             get
             {
                 return Svalues;
             }
         }
-        internal long[] PendAddress
+        internal long[] PendAddress //D,R,W EndAddress用
         {
             get
             {
@@ -524,8 +522,6 @@ namespace PLCDataBackUp
                     while (Dataend);
                 }
             }
-
-
             return ReceiveDataMemorys;
         }
 
@@ -585,8 +581,6 @@ namespace PLCDataBackUp
         /// </summary>
         private void ReadOutStartAddressSet()
         {
-           
-
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < ArrayCount; j++)
                     for (int k = 0; k < 2; k++)
@@ -700,33 +694,14 @@ namespace PLCDataBackUp
 
         internal override List<string> AddressSet(List<(string x, string y)> swaList)
         {
-           
-            string code = "";
-
             PlcSendBuffer.Clear();
-
-            for (int i = 0; i < 3; i++)
+            foreach(var code in DevicdCode)
             {
-                switch (i)
-                {
-                    case 0:
-                        code = "D";
-                        break;
-                    case 1:
-                        code = "R";
-                        break;
-                    case 2:
-                        code = "W";
-                        break;
-                    default:
-                        break;
-                }
-
-                var query = swaList.Where(c => c.x.StartsWith(code)).ToList();//該当するdeviceのみ抜き出す
+                var dquery = swaList.Where(c => c.x.StartsWith(code)).ToList();//該当するdeviceのみ抜き出す
                 int count = 0;
-                while (count * RandomWriteMax < query.Count())
+                while (count * RandomWriteMax < dquery.Count())
                 {
-                    var OnewaList = query.Skip(count * (int)MaxLength).Take((int)MaxLength).ToList();
+                    var OnewaList = dquery.Skip(count * (int)MaxLength).Take((int)MaxLength).ToList();
                     PlcSendBuffer.Add(Commandcreate(OnewaList.Count(), AddressSetiing(OnewaList)));
                     count++;
                 }
@@ -751,13 +726,13 @@ namespace PLCDataBackUp
         internal override string AddressSetiing(List<(string x, string y)> OnewaList)
         {
             string senddata = "";
-            string devicecode = "";
+            string code = "";
             int startaddress = 0;
             (string x, string y) saddress = OnewaList.FirstOrDefault();
             if (!string.IsNullOrWhiteSpace(saddress.x))
             {
-                devicecode = saddress.x.Substring(0, 1);
-                startaddress = int.Parse(saddress.x.Replace(devicecode, ""));
+                code = saddress.x.Substring(0, 1);
+                startaddress = int.Parse(saddress.x.Replace(code, ""));
             }
             else
             {
@@ -768,8 +743,8 @@ namespace PLCDataBackUp
             int addHi = startaddress >> 8;
             int itemLo = (int)OnewaList.Count() & 0xff;
             int itemHi = (int)OnewaList.Count() >> 8;
-            string DeviceCode = CodeChange(devicecode);
-            senddata = addLo.ToString("X2") + addHi.ToString("X2") + "00" + DeviceCode + itemLo.ToString("X2") + itemHi.ToString("X2");
+            string deviceCode = CodeChange(code);
+            senddata = addLo.ToString("X2") + addHi.ToString("X2") + "00" + deviceCode + itemLo.ToString("X2") + itemHi.ToString("X2");
             foreach (var sdat in OnewaList)
             {
                 int data = int.Parse(sdat.y);
