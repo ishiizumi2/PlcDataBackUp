@@ -34,7 +34,7 @@ namespace PLCDataBackUp
         string SendCommand = "";
         Encoding sjisEnc = Encoding.GetEncoding("Shift_JIS");
         string[] lines;
-        int RowCount = 0; //書き込み用の配列のカウント
+        int linescount = 0; //書き込み用の配列のカウント
         DateTime dt1;
         Boolean elapsedTimeSet;
 
@@ -154,22 +154,9 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void ContinuityWrite_Btn_Click(object sender, EventArgs e)
         {
-            RowCount = 0;
+            linescount = 0;
             SendCommand = ContinuityWrite;//ワード単位の一括書き込みコマンド 
-            string FileName = continuityWritePlcSend.FileSelect();
-            if (!string.IsNullOrWhiteSpace(FileName))
-            {
-                lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
-                Timer_Set();
-                timer2.Start(); // タイマーを開始
-            }
-            else
-            {
-                MessageBox.Show("ファイルが選択されていません",
-                "エラー",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-            }
+            File_read(continuityWritePlcSend.FileSelect());
         }
 
         /// <summary>
@@ -195,9 +182,17 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void RandomWrite_Btn_Click(object sender, EventArgs e)
         {
-            RowCount = 0;
+            linescount = 0;
             SendCommand = RandomWrite;//ランダム書き込みコマンド 
-            string FileName = randomWritePlcSend.FileSelect();
+            File_read(randomWritePlcSend.FileSelect());
+        }
+
+        /// <summary>
+        /// ファイルを読んでlines[]に代入
+        /// </summary>
+        /// <param name="FileName"></param>
+        private void  File_read(string FileName)
+        {
             if (!string.IsNullOrWhiteSpace(FileName))
             {
                 lines = File.ReadAllLines(FileName, sjisEnc);//全ファイルを読み込み
@@ -211,7 +206,6 @@ namespace PLCDataBackUp
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
             }
-
         }
 
         /// <summary>
@@ -425,7 +419,7 @@ namespace PLCDataBackUp
             sw.Close();
         }
 
-
+        /*
         /// <summary>
         /// テスト用
         /// </summary>
@@ -462,7 +456,7 @@ namespace PLCDataBackUp
             DebugText(Buf3);
             ReadReceiveDataCheck();
         }
-
+        */
 
         /// <summary>
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
@@ -482,8 +476,6 @@ namespace PLCDataBackUp
                     break;
             }
             cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData"+ directory + StartTime + ".csv";
-
-
             DateTime now = DateTime.Now;
             string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
 
@@ -535,14 +527,14 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void timer2_Tick(object sender, EventArgs e)
         {
-            if (RowCount >= lines.Count())//送信完了
+            if (linescount >= lines.Count())//送信完了
             {
                 timer2.Stop();
                 textBox1.Text = "送信完了";
             }
             else
             {
-                string[] arr = lines[RowCount].Split(',');
+                string[] arr = lines[linescount].Split(',');
                 if (arr.Length != 0)
                 {
                     SendCount = 0;
@@ -567,9 +559,8 @@ namespace PLCDataBackUp
                             PlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
                             break;
                     }
-                    
                     PlcDataSend();
-                    RowCount++;
+                    linescount++;
                 }
             }
         }
@@ -590,12 +581,12 @@ namespace PLCDataBackUp
         private void Timer_Set()
         {
             Boolean TimerError = false;
-            if (int.TryParse(textBox2.Text ,out int i))
+            if (int.TryParse(textBox2.Text ,out int interval))
             {
-                if ((i > 0)&&(i<100))
+                if ((interval > 0)&&(interval < 100))
                 {
-                    timer1.Interval = i * 1000;
-                    timer2.Interval = i * 1000;
+                    timer1.Interval = interval * 1000;
+                    timer2.Interval = interval * 1000;
                 }
                 else
                 {

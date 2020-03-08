@@ -363,9 +363,9 @@
             this.label14.AutoSize = true;
             this.label14.Location = new System.Drawing.Point(673, 29);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(115, 12);
+            this.label14.Size = new System.Drawing.Size(91, 12);
             this.label14.TabIndex = 49;
-            this.label14.Text = "タイマー読込間隔(sec)";
+            this.label14.Text = "タイマー間隔(sec)";
             // 
             // label2
             // 

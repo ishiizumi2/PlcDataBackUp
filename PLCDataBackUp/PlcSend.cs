@@ -43,26 +43,7 @@ namespace PLCDataBackUp
         internal abstract string AddressSetiing(List<int> OneraList);
         internal abstract string AddressSetiing(List<(string x, string y)> OnewaList);
         internal abstract string AddressSetiing(int devicecode, long StartAddress, long ReadLen);
-
-
-        /// <summary>
-        /// 送信データ,受信データの保存 Debug
-        /// </summary>
-        /// <param name="line"></param>Debug Text
-        protected void DebugText(string line)
-        {
-            string cDir = Directory.GetCurrentDirectory() + @"\WorkData\Debug\" + StartTime + ".txt";
-
-            //ファイルを追記し、Shift JISで書き込む
-            System.IO.StreamWriter sw = new System.IO.StreamWriter(
-                @cDir,
-                true,
-                System.Text.Encoding.GetEncoding("shift_jis"));
-            sw.WriteLine(line);
-            //閉じる
-            sw.Close();
-        }
-
+        
         /// <summary>
         /// ファイルの選択
         /// </summary>
