@@ -140,7 +140,7 @@
             this.EndAdd1.Name = "EndAdd1";
             this.EndAdd1.Size = new System.Drawing.Size(100, 19);
             this.EndAdd1.TabIndex = 13;
-            this.EndAdd1.Text = "100";
+            this.EndAdd1.Text = "10";
             // 
             // EndAdd2
             // 
@@ -252,7 +252,7 @@
             this.ContinuityRead_Btn.Name = "ContinuityRead_Btn";
             this.ContinuityRead_Btn.Size = new System.Drawing.Size(134, 23);
             this.ContinuityRead_Btn.TabIndex = 26;
-            this.ContinuityRead_Btn.Text = "連続データの読込";
+            this.ContinuityRead_Btn.Text = "一括読み出し";
             this.ContinuityRead_Btn.UseVisualStyleBackColor = true;
             this.ContinuityRead_Btn.Click += new System.EventHandler(this.ContinuityRead_Btn_Click);
             // 
@@ -262,7 +262,7 @@
             this.ContinuityWrite_Btn.Name = "ContinuityWrite_Btn";
             this.ContinuityWrite_Btn.Size = new System.Drawing.Size(134, 23);
             this.ContinuityWrite_Btn.TabIndex = 28;
-            this.ContinuityWrite_Btn.Text = "連続データの書き込み";
+            this.ContinuityWrite_Btn.Text = "一括書き込み";
             this.ContinuityWrite_Btn.UseVisualStyleBackColor = true;
             this.ContinuityWrite_Btn.Click += new System.EventHandler(this.ContinuityWrite_Btn_Click);
             // 

@@ -17,14 +17,14 @@ namespace PLCDataBackUp
         const int ArrayCount = 68; //32767/MaxLingthの数
         const int RDStratPosition = 22;
         const string ContinuityRead =  "0104"; //PLC 一括読み出しコマンド
-        const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
+        const string ContinuityWrite = "0114"; //PLC コマンド
         const string RandomRead =      "0304"; //PLC ランダム読み出しコマンド 
         const string RandomWrite =     "0214"; //PLC ランダム書き込みコマンド
         const string DeviceCode = "A8"; //Dアドレス
         const int MaxAddres = 11135; //Qシリーズで扱える最大のDアドレス
+                
+        TcpClient tClient = new TcpClient();//Socketクライアント
 
-        //Socketクライアント
-        TcpClient tClient = new TcpClient();
         RandomReadPlcSend randomReadPlcSend = new RandomReadPlcSend();
         RandomWritePlcSend randomWritePlcSend = new RandomWritePlcSend();
         ContinuityReadPlcSend continuityReadPlcSend = new ContinuityReadPlcSend();
@@ -131,7 +131,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// 連続データ読み出し
+        /// 一括読み出し
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -148,7 +148,7 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// 連続データ書き込み
+        /// 一括書き込み
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -402,21 +402,18 @@ namespace PLCDataBackUp
         /// 送信データ,受信データの保存 Debug
         /// </summary>
         /// <param name="line"></param>Debug Text
-        private void DebugText(string line)
+        private async void DebugText(string line)
         {
             textBox1.Text = line;
-            string cDir = Directory.GetCurrentDirectory()+@"\WorkData\Debug\"+StartTime+".txt";
+            string cDir = @Directory.GetCurrentDirectory()+@"\WorkData\Debug\"+StartTime+".txt";
             DateTime now = DateTime.Now;
             string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
+            using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
+            {
+                // 非同期的に文字列を書き込む
+                await writer.WriteLineAsync(str + line);
 
-            //ファイルを追記し、Shift JISで書き込む
-            System.IO.StreamWriter sw = new System.IO.StreamWriter(
-                @cDir,
-                true,
-                System.Text.Encoding.GetEncoding("shift_jis"));
-            sw.WriteLine(str+line);
-            //閉じる
-            sw.Close();
+            } // usingを抜けるときにファイルがクローズされる
         }
 
         /*
@@ -462,7 +459,7 @@ namespace PLCDataBackUp
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
         /// <param name="type">dataの種類　1:連続　2:ﾗﾝﾀﾞﾑ</param>
-        private void RandomReciveDataSave(string type)
+        private async void RandomReciveDataSave(string type)
         {
             string cDir="";
             string directory = "";
@@ -483,14 +480,12 @@ namespace PLCDataBackUp
             {
                 str = str + sdata.ReceiveAddress + "," + sdata.ReceiveDataSet + ",";
             }
-            //ファイルを追記し、Shift JISで書き込む
-            System.IO.StreamWriter sw = new System.IO.StreamWriter(
-                @cDir,
-                true,
-                sjisEnc);
-            sw.WriteLine(str);
-            //閉じる
-            sw.Close();
+            using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
+            {
+                // 非同期的に文字列を書き込む
+                await writer.WriteLineAsync(str);
+
+            } // usingを抜けるときにファイルがクローズされる
         }
 
         /// <summary>
@@ -500,9 +495,9 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void timer1_Tick(object sender, EventArgs e)
         {
-             ReciveDataBufffer.Clear();
-             ReciveDatas.Clear();
-             PlcDataSend();
+            ReciveDataBufffer.Clear();
+            ReciveDatas.Clear();
+            PlcDataSend();
             if (elapsedTimeSet)
             {  
                 // 現在時を取得
@@ -542,13 +537,9 @@ namespace PLCDataBackUp
 
                     List<string> alist = new List<string>();
                     alist.AddRange(arr); //string[]をlist<string>に変換するために行っている
-
-
                     var blist = alist.Skip(1).ToList();//時刻データを削除
-
                     var result2 = blist.Where((name, index) => index % 2 == 0).ToList();//addressを抽出
                     var result1 = blist.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
-
                     var swaList = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
                     switch(SendCommand)
                     {
