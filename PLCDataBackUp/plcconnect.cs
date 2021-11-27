@@ -339,7 +339,7 @@ namespace PLCDataBackUp
                                     ReceiveDataMemorys = randomReadPlcSend.RequestReceiveDataSet(ReciveDatas, PlcSendBuffer);
                                     break;
                             }
-                            RandomReciveDataSave(SendCommand);
+                            ReciveDataSave(SendCommand);
                         }
                         SendCount = 0;
                         break;
@@ -386,9 +386,9 @@ namespace PLCDataBackUp
         /// </summary>
         private void WriteReciveDataCheck()
         {
+            if (ReciveDataBufffer?.Count > 0) { //null判定
             foreach (var ReceiveData in ReciveDataBufffer)
             {
-                //DataLength = ReceiveData.data.Substring(14, 4);//応答データ長
                 string Endcode = ReceiveData.Substring(18, 4);//終了コード
                 if (int.Parse(Endcode) != 0)
                 {
@@ -396,24 +396,29 @@ namespace PLCDataBackUp
                 }
             }
         }
+        }
 
 
         /// <summary>
         /// 送信データ,受信データの保存 Debug
         /// </summary>
         /// <param name="line"></param>Debug Text
-        private void DebugText(string line)
+        private async void DebugText(string line)
         {
             textBox1.Text = line;
-            string cDir = @Directory.GetCurrentDirectory()+@"\WorkData\Debug\"+StartTime+".txt";
-            DateTime now = DateTime.Now;
-            string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
-            using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
+            if (!string.IsNullOrWhiteSpace(line))
             {
-                // 文字列を書き込む
-                writer.WriteLine(str + line);
+                
+                string cDir = @Directory.GetCurrentDirectory() + @"\WorkData\Debug\" + StartTime + ".txt";
+                DateTime now = DateTime.Now;
+                string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
+                using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
+                {
+                    // 文字列を書き込む
+                    await writer.WriteLineAsync(str + line);
 
-            } // usingを抜けるときにファイルがクローズされる
+                } // usingを抜けるときにファイルがクローズされる
+            }
         }
 
         /*
@@ -459,7 +464,7 @@ namespace PLCDataBackUp
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
         /// <param name="type">dataの種類　1:連続　2:ﾗﾝﾀﾞﾑ</param>
-        private void RandomReciveDataSave(string type)
+        private async void ReciveDataSave(string type)
         {
             string cDir="";
             string directory = "";
@@ -475,17 +480,20 @@ namespace PLCDataBackUp
             cDir = Directory.GetCurrentDirectory() + @"\WorkData\PlcData"+ directory + StartTime + ".csv";
             DateTime now = DateTime.Now;
             string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
-
-            foreach (var sdata in ReceiveDataMemorys)
+            if (ReceiveDataMemorys?.Count > 0)
             {
-                str = str + sdata.ReceiveAddress + "," + sdata.ReceiveDataSet + ",";
+                foreach (var sdata in ReceiveDataMemorys)
+                {
+                    str = str + sdata.ReceiveAddress + "," + sdata.ReceiveDataSet + ",";
+                }
+                using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
+                {
+                    // 文字列を書き込む
+                    await writer.WriteLineAsync(str);
+
+                } // usingを抜けるときにファイルがクローズされる
             }
-            using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
-            {
-                // 文字列を書き込む
-                writer.WriteLine(str);
 
-            } // usingを抜けるときにファイルがクローズされる
         }
 
         /// <summary>
@@ -529,25 +537,22 @@ namespace PLCDataBackUp
             }
             else
             {
-                string[] arr = lines[linescount].Split(',');
-                if (arr.Length != 0)
+                var LineList= lines[linescount].Split(',').ToList();
+                if (LineList?.Count > 0)
                 {
                     SendCount = 0;
                     ReciveDataBufffer.Clear();
-
-                    List<string> alist = new List<string>();
-                    alist.AddRange(arr); //string[]をlist<string>に変換するために行っている
-                    var blist = alist.Skip(1).ToList();//時刻データを削除
-                    var result2 = blist.Where((name, index) => index % 2 == 0).ToList();//addressを抽出
-                    var result1 = blist.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
-                    var swaList = result2.Zip(result1, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
+                    var LineList2 = LineList.Skip(1).ToList();//時刻データを削除
+                    var AddressList = LineList2.Where((name, index) => index % 2 == 0).ToList();//addressを抽出
+                    var DataList = LineList2.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
+                    var A_D_LIST = AddressList.Zip(DataList, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
                     switch(SendCommand)
                     {
                         case ContinuityWrite:
-                            PlcSendBuffer = continuityWritePlcSend.AddressSet(swaList);
+                            PlcSendBuffer = continuityWritePlcSend.AddressSet(A_D_LIST);
                             break;
                         case RandomWrite:
-                            PlcSendBuffer = randomWritePlcSend.AddressSet(swaList);
+                            PlcSendBuffer = randomWritePlcSend.AddressSet(A_D_LIST);
                             break;
                     }
                     PlcDataSend();
