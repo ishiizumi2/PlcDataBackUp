@@ -565,22 +565,25 @@ namespace PLCDataBackUp
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < ArrayCount; j++)
                     for (int k = 0; k < 2; k++)
-                        ReadOutAddress[i, j, k] = (long)-1;
+                        ReadOutAddress[i, j, k] = (long)-1;//初期化
 
             for (int i = 0; i < 3; i++)
             {
-                for (long j = 0; j < ArrayCount; j++)
+                if (PstartAddress[i] != PendAddress[i])
                 {
-                    ReadOutAddress[i, j, 0] = (long)(PstartAddress[i] + MaxLength * j);//開始Address
-                    long aa = (long)(PstartAddress[i] + MaxLength * j);//開始Address);
-                    if ((PstartAddress[i] + MaxLength * (j + 1)) <= PendAddress[i])
+                    for (long j = 0; j < ArrayCount; j++)
                     {
-                        ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
-                    }
-                    else
-                    {
-                        ReadOutAddress[i, j, 1] = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
-                        break;
+                        ReadOutAddress[i, j, 0] = (long)(PstartAddress[i] + MaxLength * j);//開始Address
+
+                        if ((PstartAddress[i] + MaxLength * (j + 1)) <= PendAddress[i])
+                        {
+                            ReadOutAddress[i, j, 1] = (long)MaxLength;//読み出しワード数
+                        }
+                        else
+                        {
+                            ReadOutAddress[i, j, 1] = (long)(PendAddress[i] - (PstartAddress[i] + MaxLength * j) + 1);//最終読み出しワード数
+                            break;
+                        }
                     }
                 }
             }

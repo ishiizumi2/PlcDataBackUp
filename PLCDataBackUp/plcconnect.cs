@@ -322,7 +322,7 @@ namespace PLCDataBackUp
                     SendCount++;
                 }
             }
-            else //受信完了
+            else //送信完了　受信したデータをチェック
             {
                 switch (SendCommand){
                     case ContinuityRead:
@@ -402,7 +402,7 @@ namespace PLCDataBackUp
         /// 送信データ,受信データの保存 Debug
         /// </summary>
         /// <param name="line"></param>Debug Text
-        private async void DebugText(string line)
+        private void DebugText(string line)
         {
             textBox1.Text = line;
             string cDir = @Directory.GetCurrentDirectory()+@"\WorkData\Debug\"+StartTime+".txt";
@@ -410,8 +410,8 @@ namespace PLCDataBackUp
             string str = now.ToString("yyyy/MM/dd HH:mm:ss,");
             using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
             {
-                // 非同期的に文字列を書き込む
-                await writer.WriteLineAsync(str + line);
+                // 文字列を書き込む
+                writer.WriteLine(str + line);
 
             } // usingを抜けるときにファイルがクローズされる
         }
@@ -459,7 +459,7 @@ namespace PLCDataBackUp
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
         /// <param name="type">dataの種類　1:連続　2:ﾗﾝﾀﾞﾑ</param>
-        private async void RandomReciveDataSave(string type)
+        private void RandomReciveDataSave(string type)
         {
             string cDir="";
             string directory = "";
@@ -482,8 +482,8 @@ namespace PLCDataBackUp
             }
             using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
             {
-                // 非同期的に文字列を書き込む
-                await writer.WriteLineAsync(str);
+                // 文字列を書き込む
+                writer.WriteLine(str);
 
             } // usingを抜けるときにファイルがクローズされる
         }
