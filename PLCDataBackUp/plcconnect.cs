@@ -17,7 +17,7 @@ namespace PLCDataBackUp
         const int ArrayCount = 68; //32767/MaxLingthの数
         const int RDStratPosition = 22;
         const string ContinuityRead =  "0104"; //PLC 一括読み出しコマンド
-        const string ContinuityWrite = "0114"; //PLC コマンド
+        const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
         const string RandomRead =      "0304"; //PLC ランダム読み出しコマンド 
         const string RandomWrite =     "0214"; //PLC ランダム書き込みコマンド
         const string DeviceCode = "A8"; //Dアドレス
@@ -33,10 +33,10 @@ namespace PLCDataBackUp
         string StartTime;
         string SendCommand = "";
         Encoding sjisEnc = Encoding.GetEncoding("Shift_JIS");
-        string[] lines;
-        int linescount = 0; //書き込み用の配列のカウント
+        string[] lines; //書き込み用の読み込みデータ
+        int lines_send_count = 0; //書き込み用送信のカウント
         DateTime dt1;
-        Boolean elapsedTimeSet;
+        Boolean elapsedTimeSet;//終了時間判定
 
         List<string> ReciveDataBufffer = new List<string>(); //受信データ用
         List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
@@ -154,7 +154,7 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void ContinuityWrite_Btn_Click(object sender, EventArgs e)
         {
-            linescount = 0;
+            lines_send_count = 0;
             SendCommand = ContinuityWrite;//ワード単位の一括書き込みコマンド 
             File_read(continuityWritePlcSend.FileSelect());
         }
@@ -182,7 +182,7 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void RandomWrite_Btn_Click(object sender, EventArgs e)
         {
-            linescount = 0;
+            lines_send_count = 0;
             SendCommand = RandomWrite;//ランダム書き込みコマンド 
             File_read(randomWritePlcSend.FileSelect());
         }
@@ -530,21 +530,20 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void timer2_Tick(object sender, EventArgs e)
         {
-            if (linescount >= lines.Count())//送信完了
+            if (lines_send_count >= lines.Count())//送信完了
             {
                 timer2.Stop();
                 textBox1.Text = "送信完了";
             }
             else
             {
-                var LineList= lines[linescount].Split(',').ToList();
+                var LineList = lines[lines_send_count].Split(',').Skip(1).ToList();//','でデータを分割して1番目のデータを削除
                 if (LineList?.Count > 0)
                 {
                     SendCount = 0;
                     ReciveDataBufffer.Clear();
-                    var LineList2 = LineList.Skip(1).ToList();//時刻データを削除
-                    var AddressList = LineList2.Where((name, index) => index % 2 == 0).ToList();//addressを抽出
-                    var DataList = LineList2.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
+                    var AddressList = LineList.Where((name, index) => index % 2 == 0).ToList();//addressを抽出
+                    var DataList = LineList.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
                     var A_D_LIST = AddressList.Zip(DataList, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
                     switch(SendCommand)
                     {
@@ -556,7 +555,7 @@ namespace PLCDataBackUp
                             break;
                     }
                     PlcDataSend();
-                    linescount++;
+                    lines_send_count++;
                 }
             }
         }
@@ -602,7 +601,7 @@ namespace PLCDataBackUp
 
             // 現在時を取得
             dt1 = DateTime.Now;
-            //時間を設定
+            //終了時刻を設定
             int elapsedTime = -1;
             int.TryParse(textBox3.Text, out elapsedTime);
             if (elapsedTime > 0)
