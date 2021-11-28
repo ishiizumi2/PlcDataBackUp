@@ -76,7 +76,6 @@ namespace PLCDataBackUp
             //Debug用通信データ
             DateTime dt = DateTime.Now;
             StartTime = dt.ToString("yyyy-MM-dd_HH-mm-ss");
-            randomReadPlcSend.StartTime = StartTime;
             DebugText(StartTime);
         }
 
@@ -372,7 +371,7 @@ namespace PLCDataBackUp
                             int Position = Convert.ToInt32((DataLength.Substring(2, 2) + DataLength.Substring(0, 2)), 16);
                             if ((Databuf.Length) / 2 + 2 == Position)
                             {
-                                ReciveDatas.Add(Databuf);//受信したデータを追加している
+                                ReciveDatas.Add(Databuf);//受信したデータを追加
                             }
                         }
                     }
@@ -403,7 +402,7 @@ namespace PLCDataBackUp
         /// 送信データ,受信データの保存 Debug
         /// </summary>
         /// <param name="line"></param>Debug Text
-        private async void DebugText(string line)
+        private void DebugText(string line)
         {
             textBox1.Text = line;
             if (!string.IsNullOrWhiteSpace(line))
@@ -415,7 +414,7 @@ namespace PLCDataBackUp
                 using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
                 {
                     // 文字列を書き込む
-                    await writer.WriteLineAsync(str + line);
+                    writer.WriteLine(str + line);
 
                 } // usingを抜けるときにファイルがクローズされる
             }
@@ -464,7 +463,7 @@ namespace PLCDataBackUp
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
         /// </summary>
         /// <param name="type">dataの種類　1:連続　2:ﾗﾝﾀﾞﾑ</param>
-        private async void ReciveDataSave(string type)
+        private void ReciveDataSave(string type)
         {
             string cDir="";
             string directory = "";
@@ -489,11 +488,10 @@ namespace PLCDataBackUp
                 using (var writer = new System.IO.StreamWriter(cDir, true, sjisEnc))
                 {
                     // 文字列を書き込む
-                    await writer.WriteLineAsync(str);
+                    writer.WriteLine(str);
 
                 } // usingを抜けるときにファイルがクローズされる
             }
-
         }
 
         /// <summary>

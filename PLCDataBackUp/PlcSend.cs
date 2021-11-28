@@ -14,22 +14,28 @@ namespace PLCDataBackUp
     /// </summary>
     abstract class PlcSend
     {
-        //Socketクライアント
-        TcpClient tClient = new TcpClient();
+        TcpClient tClient = new TcpClient();//Socketクライアント
         protected const long MaxLength = (long)480;
         protected const int RandomReadMax = 192;//ランダム読み出し最大
         protected const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
         protected const int ArrayCount = 68; //32767/MaxLingthの数
 
-        protected string Common = "500000FFFF0300";
-        protected string CPUwatchtimer = "1000";
+        protected const string Common = "500000FFFF0300";
+        protected const string CPUwatchtimer = "1000";
+        protected const string ContinuityRead = "0104"; //PLC 一括読み出しコマンド
+        protected const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
+        protected const string RandomRead = "0304"; //PLC ランダム読み出しコマンド 
+        protected const string RandomWrite = "0214"; //PLC ランダム書き込み
+        protected const string Subcommand = "0000";  //サブコマンド
+        protected const int data_start_position = 34; //ランダムデータ読み出し　送信データのデータ部分開始位置
+        protected const int SendWordLength = 8; //送信デバイスメモリ1個分のバイト数
+        protected const int ReciveWordLength = 4; //受信応答したデバイスメモリ1個分のバイト数
+
         protected string Sdata;
-        protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
+        protected List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>(); //受信したデータからcsvファイルを作成するためのデータ
         protected List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用List
         protected int[] Device = { 0xA8, 0xAF, 0xB4 };//D,R,W
         protected string[] DevicdCode = { "D", "R", "W" };
-
-        internal string StartTime { get; set; }
 
         private protected abstract string Commandcreate(int count,string senddata);
 
@@ -43,7 +49,7 @@ namespace PLCDataBackUp
         internal abstract string AddressSetiing(List<int> OneraList);
         internal abstract string AddressSetiing(List<(string x, string y)> OnewaList);
         internal abstract string AddressSetiing(int devicecode, long StartAddress, long ReadLen);
-        
+
         /// <summary>
         /// ファイルの選択
         /// </summary>
@@ -134,51 +140,56 @@ namespace PLCDataBackUp
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
 
-            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "03040000" + count.ToString("X2") + "00" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + RandomRead + Subcommand + count.ToString("X2") + "00" + senddata;
             return Sdata;
         }
 
+
         /// <summary>
         /// ランダム読み出し用
-        /// 要求したデータをlist<>ReceiveDataMemorysに設定
-        ///  ReciveDatas と SendatasからデータをマージしてReceiveDataMemorysに代入する
+        /// Dデバイスのみ対応
+        /// ReciveDatasからDアドレスの値を取り出してvalueListを作成　  
+        /// PlcSendBufferから読み込み要求したアドレスを取り出してaddressListを作成 
         /// </summary>
+        /// <param name="ReciveDatas"受信データ></param>
+        /// <param name="PlcSendBuffer"送信データ></param>
+        /// <returns>ReceiveDataMemorys</returns>
         internal override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> PlcSendBuffer)
         {
             string DeviceKind = "D";
             List<string> addressList = new List<string>();
-            List<int> dataList = new List<int>();
-            foreach (var (data, index) in ReciveDatas.Select((data, index) => (data, index)))
+            List<int> valueList = new List<int>();
+            foreach (var (value, index) in ReciveDatas.Select((value, index) => (value, index)))
             {
                 string senddata = PlcSendBuffer.ElementAtOrDefault(index); 
-                if (senddata != null)
+                if (!string.IsNullOrEmpty(senddata))
                 {
                     //DアドレスのList<string>を作成する
-                    int Datacount = (senddata.Length - 33)/8;
+                    int Datacount = (senddata.Length - data_start_position)/SendWordLength;//要求したデータの個数を産出
                     for (int i=0; i< Datacount; i++)
                     {
-                        //1word 8byte  P171  
-                        //address   L  -  H  デバイスコード
-                        //          12 34 56 78 
-                        string address = senddata.Substring(34+i*8, 8);
-                        addressList.Add(DeviceKind + Convert.ToInt32((address.Substring(2, 2) + address.Substring(0, 2)), 16).ToString("D4"));
+                        //Q対応Ethernet リファレンスマニュアル　コミュニケーションプロトコル.pdf P171参照
+                        //1word 8byte    
+                        //デバイス指定形式   L  -  H  デバイスコード
+                        //       　　　　　　12 34 56 78 
+                        string address = senddata.Substring(data_start_position+i*SendWordLength, SendWordLength);
+                        addressList.Add(DeviceKind + Convert.ToInt32((address.Substring(2, 2) 
+                                                   + address.Substring(0, 2)), 16).ToString("D4"));//要求したデバイスメモリのアドレス 10進数4桁に変換
                     }
 
-                    //読み込んだデータのlist<int>を作成する
+                    //受信したデータのList<int>を作成する
                     Boolean Dataend = true;
                     int rdatacount = 0;
                     do
                     {
                         try
                         {
-                            if (data.Length > rdatacount * 4)
+                            if (value.Length > rdatacount * ReciveWordLength)
                             {
-                                string Rdata = data.Substring(rdatacount * 4, 4);
-                              
+                                string Rdata = value.Substring(rdatacount * ReciveWordLength, ReciveWordLength);
                                 if (!string.IsNullOrEmpty(Rdata))
                                 {
-                                    dataList.Add(Convert.ToInt32((Rdata.Substring(2, 2) + Rdata.Substring(0, 2)), 16));
-                                    
+                                    valueList.Add(Convert.ToInt32((Rdata.Substring(2, 2) + Rdata.Substring(0, 2)), 16)); //要求したデバイスメモリの値 10進数に変換
                                 }
                                 rdatacount++;
                             }
@@ -197,8 +208,9 @@ namespace PLCDataBackUp
             }
 
             ReceiveDataMemorys.Clear();
-            
-            foreach (var adata in addressList.Zip(dataList, (address, data) => Tuple.Create(address, data)))//タプル
+
+            //アドレスのList(addressList)と値のList(valueList)をMergeしてReceiveDataMemorysを作成する
+            foreach (var adata in addressList.Zip(valueList, (address, value) => Tuple.Create(address, value)))//タプル
             {
 
                 ReceiveDataMemorys.Add(new ReceiveDataMemory(adata.Item1, adata.Item2));
@@ -302,7 +314,7 @@ namespace PLCDataBackUp
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
 
-            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "02140000" + count.ToString("X2") + "00" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + RandomWrite + Subcommand + count.ToString("X2") + "00" + senddata;
             return Sdata;
         }
 
@@ -437,7 +449,7 @@ namespace PLCDataBackUp
             int len = 0x0C;//0C固定
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
-            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "01040000" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + ContinuityRead + Subcommand + senddata;
             return Sdata;
         }
 
@@ -445,6 +457,8 @@ namespace PLCDataBackUp
         /// 一括読み出し用
         /// 要求したデータをlist<>ReceiveDataMemorysに設定
         ///  ReciveDatas と SendatasからデータをマージしてReceiveDataMemorysに代入する
+        ///  Recivedatas : 受信データ
+        ///  PlcSendBuffer : コマンド要求送信データ
         /// </summary>
         internal override List<ReceiveDataMemory> RequestReceiveDataSet(List<string> ReciveDatas, List<string> PlcSendBuffer)
         {
@@ -643,7 +657,7 @@ namespace PLCDataBackUp
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
 
-            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + "01140000" + senddata;
+            Sdata = Common + lenLo.ToString("X2") + lenHi.ToString("X2") + CPUwatchtimer + ContinuityWrite + Subcommand + senddata;
             return Sdata;
         }
 
@@ -706,7 +720,7 @@ namespace PLCDataBackUp
             return str;
         }
 
-        //
+        
         internal override string AddressSetiing(List<(string x, string y)> OnewaList)
         {
             string senddata = "";
