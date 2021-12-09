@@ -11,18 +11,17 @@ namespace PLCDataBackUp
 
     public partial class plcconnect : Form
     {
-        const long MaxLength = (long)480;
-        const int RandomReadMax = 192;//ランダム読み出し最大
-        const int RandomWriteMax = 150;//ランダム書き込み最大点数　P114
-        const int ArrayCount = 68; //32767/MaxLingthの数
-        const int RDStratPosition = 22;
         const string ContinuityRead =  "0104"; //PLC 一括読み出しコマンド
         const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
         const string RandomRead =      "0304"; //PLC ランダム読み出しコマンド 
         const string RandomWrite =     "0214"; //PLC ランダム書き込みコマンド
         const string DeviceCode = "A8"; //Dアドレス
         const int MaxAddres = 11135; //Qシリーズで扱える最大のDアドレス
-                
+        const int read_data_Position = 22;  //応答データ部位置　P68
+        const int response_data_length_Position = 14; //応答データ長位置
+        const int end_code_Position = 18; //終了コード位置
+
+
         TcpClient tClient = new TcpClient();//Socketクライアント
 
         RandomReadPlcSend randomReadPlcSend = new RandomReadPlcSend();
@@ -38,10 +37,10 @@ namespace PLCDataBackUp
         DateTime dt1;
         Boolean elapsedTimeSet;//終了時間判定
 
-        List<string> ReciveDataBufffer = new List<string>(); //受信データ用
-        List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();
+        List<string> ReciveDataBufffer = new List<string>(); //受信データ用List
+        List<ReceiveDataMemory> ReceiveDataMemorys = new List<ReceiveDataMemory>();//1回の読み出しコマンドで受信したアドレスとデータのList
         List<string> ReciveDatas = new List<string>();
-        List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用
+        List<string> PlcSendBuffer = new List<string>(); //コマンド伝文用List
 
         public plcconnect()
         {
@@ -116,7 +115,7 @@ namespace PLCDataBackUp
         /// <param name="e"></param>
         private void ReceiveData(object sender, string e)
         {
-            ReciveDataBufffer.Add(e);//受信した
+            ReciveDataBufffer.Add(e);//受信データのList作成
             DebugText(e);
             PlcDataSend();//次のデータを送信する            
         }
@@ -276,7 +275,7 @@ namespace PLCDataBackUp
 
         /// <summary>
         /// アドレス設定ファイルを読み込む
-        /// ReadAddressSetに作成したrslistを渡す        /// 
+        /// ReadAddressSetに作成したrslistを渡す         
         /// </summary>
         private Boolean RandomReadAddressData()
         {
@@ -302,7 +301,7 @@ namespace PLCDataBackUp
                 return false;
             }
             var sraList = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
-            PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);
+            PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);//ランダム読み出し　Dアドレスから送信データを作成
             return true;
         }
 
@@ -321,7 +320,7 @@ namespace PLCDataBackUp
                     SendCount++;
                 }
             }
-            else //送信完了　受信したデータをチェック
+            else //送信完了　受信したデータをチェック OKならばReceiveDataMemorysを作成
             {
                 switch (SendCommand){
                     case ContinuityRead:
@@ -351,7 +350,8 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// データ読み出しコマンドで受信したデータのチェック
+        /// データ読み出しコマンドで受信したデータのチェック　P68
+        /// 1回の受信データのList ReciveDatasを作成
         /// Endcode 0:正常 0以外:異常
         /// </summary>
         private int ReadReceiveDataCheck()
@@ -360,16 +360,19 @@ namespace PLCDataBackUp
            
             foreach (var ReceiveData in ReciveDataBufffer)
             {
-                if (ReceiveData.Length != 0)
+                if (ReceiveData?.Length > 0)
                 {
-                    string DataLength = ReceiveData.Substring(14, 4);//応答データ長
-                    if (Int32.TryParse(ReceiveData.Substring(18, 4), out Endcode))
+                    //3Eフレーム　データを読み出す場合　シーケンサCPU側　→　相手機器側（応答伝文）
+                    //サブヘッダ　ネットワーク番号　PC番号 要求先ユニットI/O番号　要求先ユニット局番号　応答データ長　            終了コード　応答データ部
+                    //0  2        4                 6      8                      12                    14L H(リトルエンディアン) 18          22
+                    //D0 00       00                FF     FF 03                  00                    xxxx                      0000        xxxxxx
+                    string DataLength = ReceiveData.Substring(response_data_length_Position, 4);//応答データ長
+                    if (Int32.TryParse(ReceiveData.Substring(end_code_Position, 4), out Endcode))//終了コード
                     {
                         if (Endcode == 0)//応答OK
                         {
-                            string Databuf = ReceiveData.Substring(RDStratPosition);//読み込みデータ
-                            int Position = Convert.ToInt32((DataLength.Substring(2, 2) + DataLength.Substring(0, 2)), 16);
-                            if ((Databuf.Length) / 2 + 2 == Position)
+                            string Databuf = ReceiveData.Substring(read_data_Position);//読み込みデータ
+                            if ((Databuf.Length) / 2 + 2 == Convert.ToInt32((DataLength.Substring(2, 2) + DataLength.Substring(0, 2)), 16))
                             {
                                 ReciveDatas.Add(Databuf);//受信したデータを追加
                             }
@@ -381,14 +384,14 @@ namespace PLCDataBackUp
         }
 
         /// <summary>
-        /// 書き込みデータの応答の確認
+        /// 書き込みコマンドで受信したのデータ(ReciveDataBufffer)の応答の確認
         /// </summary>
         private void WriteReciveDataCheck()
         {
             if (ReciveDataBufffer?.Count > 0) { //null判定
             foreach (var ReceiveData in ReciveDataBufffer)
             {
-                string Endcode = ReceiveData.Substring(18, 4);//終了コード
+                string Endcode = ReceiveData.Substring(end_code_Position, 4);//終了コード
                 if (int.Parse(Endcode) != 0)
                 {
                     MessageBox.Show("書き込みデータの応答が異常終了です");
@@ -441,8 +444,9 @@ namespace PLCDataBackUp
             //                                要求データ長 CPU監視タイマ  ランダム読み出しコマンド  サブコマンド ワードアクセス点数　    アドレス  デバイスコード
             //                                                                                                     ダブルワードアクセス点数
             //string Buf3 = "500000FFFF0300   0C00         1000            0304 　　　　　　　　　  0000         01 00    　　　　　 010000        A8";//D001 読み込み
-            string Buf3 = "500000FFFF03000C001000030400000100010000A8";//D001 読み込み
-            //Buf3 =        "500000FFFF0300 0E00 1000 0214 0000 01 00 E80300A8";
+            //string Buf3 = "500000FFFF03000C001000030400000100010000A8";//D001 読み込み
+            string Buf3 =   "54000100000000FFFF03000C001000030400000100010000A8";
+            //Buf3 =        "54000100000000FFFF0300 0E00 1000 0214 0000 01 00 E80300A8";
             int len = (int)WriteLen * 2 + 12;
             int lenLo = len & 0xff;
             int lenHi = len >> 8;
@@ -458,6 +462,7 @@ namespace PLCDataBackUp
             ReadReceiveDataCheck();
         }
         */
+        
 
         /// <summary>
         /// ReceiveDataMemorysのデータを1行にしてファイルに書き込む
@@ -523,6 +528,7 @@ namespace PLCDataBackUp
 
         /// <summary>
         /// 書き込みコマンド用のタイマー
+        /// 書き込み用のデータから送信コマンドListを作成して送信開始
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -542,7 +548,7 @@ namespace PLCDataBackUp
                     ReciveDataBufffer.Clear();
                     var AddressList = LineList.Where((name, index) => index % 2 == 0).ToList();//addressを抽出
                     var DataList = LineList.Where((name, index) => index % 2 == 1).ToList();//dataを抽出
-                    var A_D_LIST = AddressList.Zip(DataList, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする
+                    var A_D_LIST = AddressList.Zip(DataList, (address, data) => (address, data)).ToList();//addressとdataを1つのlistにマージする　型はタプル型
                     switch(SendCommand)
                     {
                         case ContinuityWrite:
@@ -552,7 +558,7 @@ namespace PLCDataBackUp
                             PlcSendBuffer = randomWritePlcSend.AddressSet(A_D_LIST);
                             break;
                     }
-                    PlcDataSend();
+                    PlcDataSend();//送信開始
                     lines_send_count++;
                 }
             }
