@@ -8,10 +8,8 @@ using System.Windows.Forms;
 
 namespace PLCDataBackUp
 {
-
     public partial class plcconnect : Form
     {
-
         const string ContinuityRead =  "0104"; //PLC 一括読み出しコマンド
         const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
         const string RandomRead =      "0304"; //PLC ランダム読み出しコマンド 
@@ -301,8 +299,7 @@ namespace PLCDataBackUp
                 MessageBoxIcon.Error);
                 return false;
             }
-            var sraList = ReadAddressList.Distinct().OrderBy(t => t).ToList();//重複を消してソートする
-            PlcSendBuffer = randomReadPlcSend.AddressSet(sraList);//ランダム読み出し　Dアドレスから送信データを作成
+            PlcSendBuffer = randomReadPlcSend.AddressSet(ReadAddressList.Distinct().OrderBy(t => t).ToList());//ランダム読み出し　Dアドレスから送信データを作成
             return true;
         }
 
