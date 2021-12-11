@@ -11,6 +11,7 @@ namespace PLCDataBackUp
 
     public partial class plcconnect : Form
     {
+
         const string ContinuityRead =  "0104"; //PLC 一括読み出しコマンド
         const string ContinuityWrite = "0114"; //PLC 一括書き込みコマンド
         const string RandomRead =      "0304"; //PLC ランダム読み出しコマンド 
