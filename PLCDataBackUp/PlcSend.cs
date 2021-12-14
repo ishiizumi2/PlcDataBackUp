@@ -592,6 +592,8 @@ namespace PLCDataBackUp
 
         /// <summary>
         /// 一括読み出しデータ設定用  P151
+        /// PlcSendBuffer用データを作成
+        /// ReadOutAddressから送信用アドレスデータを作成
         /// </summary>
         /// <param name="devicecode">デバイスコード　D,R,W</param>
         /// <param name="StartAddress">先頭デバイス</param>
